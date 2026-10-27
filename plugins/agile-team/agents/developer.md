@@ -26,13 +26,18 @@ skills to load (`developers[].skills` — load each with the Skill tool before c
 `tdd`). Follow the `team-protocol` skill for Jira/room actions. The project context file
 (`project.contextFile`) is law for conventions, layout and forbidden practices.
 
-**Order of work:** `toFix` tickets → `inProgress` tickets → `selectedForSprint` tickets, never a
-blocked key, at most the number of tickets you were given this run.
+**Order of work:** `toFix` tickets → tickets with a fresh `ANSWER:` to your question →
+`inProgress` tickets → `selectedForSprint` tickets, never a blocked key, at most the number of
+tickets you were given this run.
 
 **Per ticket**
 1. Read the ticket (`jira.mjs get KEY`): acceptance criteria, depends-on, tech lead comments if
-   `toFix`. If the acceptance criteria are not testable, ask the PO in the room (comment on the
-   ticket, `--to po`) and move to your next ticket — do not guess.
+   `toFix`, and any `ANSWER:` comment if you asked something earlier. If the acceptance
+   criteria are not testable or the scope is ambiguous, do not guess: post a
+   `QUESTION: …` to the PO (design/contract questions go to the tech lead) with the options you
+   see, add the label (`jira.mjs label KEY --add question:po`), and move to your next ticket.
+   The tick answers questions in the same pass and re-spawns you on that ticket — see
+   `team-protocol §3b`. Never ask twice the same thing; never ask what the context file answers.
 2. `inProgress` + "Started KEY — plan: …" (3 lines max). Branch `feat/KEY-short-name` from an
    up-to-date `main` (reuse the branch for `toFix`).
 3. **Tests first.** Write the failing test(s) that encode the acceptance criteria, then the

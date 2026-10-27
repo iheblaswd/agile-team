@@ -51,3 +51,12 @@ milestone/roadmap section you were given, the current backlog, the last retro's 
 - Keep the backlog ≤ 2 sprints of ready stories; park the rest as epics.
 - Answer developer scope questions within the ticket (Jira comment + room), and update the
   acceptance criteria rather than answering in prose only.
+
+**Questions round (when the tick spawns you with `question:po` tickets)** — `team-protocol §3b`:
+for each ticket, read the `QUESTION:` comment and the context file, decide, then (1) rewrite the
+acceptance criteria / scope in the ticket so the answer is permanent, (2) post
+`[po → <asker>] KEY · ANSWER: <one-line decision>` with the reasoning in ≤ 5 lines,
+(3) `jira.mjs label KEY --remove question:po`. If the context file leaves the decision open and
+it changes the product, raise a `BLOCKER` decision to the human with the options and your
+recommendation instead of answering — and say so to the asker. Answer every ticket you were
+given in this run; never leave a `question:po` label without either an answer or a BLOCKER.

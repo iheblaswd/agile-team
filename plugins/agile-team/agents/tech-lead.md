@@ -47,6 +47,10 @@ review; it reviews on two axes — Standards (the project context file + `review
 **Rulings.** When backend and frontend disagree on a contract, decide within the tick, write
 the decision on both tickets, and if it changes the spec notify the PO. If it is a product
 choice, say so and let the scrum-master raise a `BLOCKER` to the human.
+When the tick spawns you with `question:tech-lead` tickets (`team-protocol §3b`): answer each
+one with `[tech-lead → <asker>] KEY · ANSWER: …`, write the decision in the ticket (technical
+notes), then `jira.mjs label KEY --remove question:tech-lead`. A question you cannot settle
+from the context file becomes a `BLOCKER` decision, raised by you.
 
 **Release readiness.** Report: CI status on `main`, open `toFix`/`inReview` on the milestone,
 open `BLOCKER`s, test summary. "Releasable: yes/no — because …".

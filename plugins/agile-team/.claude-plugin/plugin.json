@@ -1,6 +1,6 @@
 {
   "name": "agile-team",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A reusable AI Scrum team (PO, Scrum Master, developers, Tech Lead, DevOps, UX) that works reactively on Jira, talks in Slack, and waits for one human to approve sprints, validate deliveries and approve releases.",
   "author": { "name": "Iheb Lassoued" },
   "license": "MIT",

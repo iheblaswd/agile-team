@@ -78,6 +78,30 @@ MR rejected · deployed to staging · daily · review package · retro · releas
 Write messages in English, concrete, max ~8 lines. Always include the branch name and/or PR URL
 when code is involved. Never paste secrets, tokens or `.env` contents.
 
+### 3b. Questions between agents (answered in the same tick)
+
+A question is a room message whose title starts with `QUESTION:` plus a label on the ticket
+that names who must answer: `question:po` (scope / acceptance criteria), `question:tech-lead`
+(design, contract, conventions), `question:<dev-id>` (something only that developer knows).
+
+```
+node $P/room.mjs say --from dev-ts --to po --ticket KEY --title "QUESTION: does the --dry-run output include the file list?" --body "Context ...\nOption A ...\nOption B ...\nI continue with my next ticket meanwhile."
+node $P/jira.mjs label KEY --add question:po
+```
+
+Rules:
+- The asker does not wait: it moves to its next ticket. The ticket keeps its status and its
+  `agent:<asker>` label.
+- The `/tick` runs a **questions round** right after the developers (tick §3b): it spawns the
+  addressee with every open `question:*` ticket, the addressee answers with a room message
+  titled `ANSWER: …` (same ticket, `--to <asker>`), updates the ticket description / acceptance
+  criteria so the answer lives in the ticket, then removes the label
+  (`jira.mjs label KEY --remove question:po`). The asker is then re-spawned once on that ticket.
+- One round per tick. A question that the addressee cannot answer from the context file or the
+  ticket becomes a `BLOCKER` decision to the human (raised by the addressee, never by the asker).
+- `ANSWER:` messages count as a MUST-announce event. Never answer a question only in prose:
+  the ticket must be updated.
+
 ## 4. Human decision gates
 
 Four decision types. Each is a Jira issue created with `room.mjs decision`, which also pings the

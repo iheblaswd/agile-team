@@ -52,6 +52,22 @@ project context file path, and the handoff rules from `team-protocol §5`. The a
 ticket to the next handoff (backend done / adjustment needed / PR ready) and posts it. It never
 touches another developer's scope. Wait for all developer agents to finish.
 
+## 3b. Questions round (same tick, one pass)
+
+Questions must not wait for the next tick. After the developers finish:
+
+1. `node $P/jira.mjs issues --jql "project = <key> AND labels in (question:po, question:tech-lead, question:<dev-id>, …)"`
+   (one `question:<addressee>` value per role/dev in the config) minus blocked keys. If empty, skip to §4.
+2. Group the tickets by addressee. Spawn each addressee **once, in parallel** (`po`,
+   `tech-lead`, or the named `developer`) with its tickets and the `team-protocol §3b` rules:
+   read the `QUESTION:` comment, answer with an `ANSWER:` room message to the asker, update the
+   ticket description / acceptance criteria, remove the `question:*` label. If it cannot answer
+   from the context file or the ticket, it raises a `BLOCKER` decision (the ticket then becomes
+   blocked and is skipped below).
+3. Re-spawn each developer that received an answer **once**, only with its answered tickets
+   (they are not counted against `maxTicketsPerTick`). It continues the ticket from where it
+   stopped. Questions asked during this second pass stay open for the next tick — never loop.
+
 ## 4. UX designer
 
 If `roles.ux-designer.enabled` and there are tickets labelled `agent:ux-designer` (unblocked),
@@ -75,7 +91,8 @@ it runs the `release` skill steps 1–3 (raises `RELEASE_APPROVAL`).
 ## 7. Close
 
 Append a one-paragraph summary to `team/chat/<today>.md` under `### tick <time>`:
-decisions resolved, tickets moved (key: from → to), PRs merged/rejected, blockers raised.
+decisions resolved, questions answered (key: asker ← addressee) and still open, tickets moved
+(key: from → to), PRs merged/rejected, blockers raised.
 Delete the lock. Print the summary.
 
 ## Failure handling
