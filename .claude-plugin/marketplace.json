@@ -1,0 +1,13 @@
+{
+  "name": "agile-team-marketplace",
+  "owner": { "name": "Iheb Lassoued" },
+  "metadata": { "description": "Local marketplace hosting the agile-team plugin." },
+  "plugins": [
+    {
+      "name": "agile-team",
+      "source": "./plugins/agile-team",
+      "description": "AI Scrum team working on Jira + Slack with human approval gates.",
+      "version": "0.1.0"
+    }
+  ]
+}
