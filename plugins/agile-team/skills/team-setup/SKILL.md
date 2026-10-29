@@ -78,7 +78,7 @@ The team is meant to run unattended: the human only answers in Slack. Register t
 the user explicitly wants manual runs first; if Slack is disabled, say that decisions and
 feedback will then only be read from `team/chat/*.md`:
 ```
-powershell -ExecutionPolicy Bypass -File ${CLAUDE_PLUGIN_ROOT}/scripts/install-schedules.ps1 -ProjectRoot "<root>" -DailyTime 09:00 -TickMinutes 45
+powershell -ExecutionPolicy Bypass -File ${CLAUDE_PLUGIN_ROOT}/scripts/install-schedules.ps1 -ProjectRoot "<root>" -DailyTime 09:00 -TickMinutes 60 -From 08:00 -To 19:00 -Weekdays
 ```
 On macOS/Linux, give the equivalent two `crontab` lines running `claude -p "/agile-team:daily"`
 and `claude -p "/agile-team:tick"` from the project root.
