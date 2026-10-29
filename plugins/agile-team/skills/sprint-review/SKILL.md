@@ -25,7 +25,9 @@ Not finished (carry-over): KEY — reason
 Metrics: planned <n> · delivered <m> · rejected MRs <r> · avg review turnaround <h>h
 ```
    "How to check" must be concrete: the staging URL from devops, a `pnpm test` line, a path under
-   `team/design/`. Ask devops (spawn it) for the staging state if not in the snapshot.
+   `team/design/`. The decision's `--human` text lists each ticket as "<titre produit> — ce que tu
+   peux vérifier : <action simple ou lien>", in the human's language; commands and paths stay in
+   the technical body. Ask devops (spawn it) for the staging state if not in the snapshot.
 3. Raise the gate: `room.mjs decision --type SPRINT_VALIDATION --summary "Sprint NN review — <m> tickets to validate" --body "<table>"`
    (no `--blocks`: nothing is blocked by a review). Tell the user in the chat.
 4. On the human's answer (via tick/daily or `/sprint-review` again), or when the human moved

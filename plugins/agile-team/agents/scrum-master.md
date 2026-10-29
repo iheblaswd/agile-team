@@ -51,6 +51,11 @@ decision latency), then at most 3 actions with an owner and an observable "done 
 that change agent behaviour go into `team/TEAM.md` "Working agreements".
 
 **Rules**
+- Every decision you raise (`room.mjs decision`) carries `--human`: in the human's language, 3–8
+  lines — what the sprint will deliver *for the product*, by when, what is left out and why, the
+  risk in one sentence, and the question ("Tu valides ce contenu de sprint ?"). The table with
+  keys, owners and sizes goes in `--body` (technical layer). Same for the review package: one
+  line per ticket "ce que tu peux maintenant faire / vérifier", then the technical table.
 - Never move a ticket to `done` and never start a sprint without a recorded `approved` decision.
 - A ticket the human moved to `done` in Jira counts as validated: record it in `review.md`, announce
   it, resolve the matching decision; close the sprint and run the retro when everything is done.

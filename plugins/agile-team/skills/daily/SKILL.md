@@ -32,6 +32,8 @@ Load `team-protocol`. `$P = ${CLAUDE_PLUGIN_ROOT}/scripts`.
 Sprint: <done>/<total> tickets in awaitingValidation or done · <n> in review · <n> to fix · velocity trend
 Risks: …
 ```
+   Write it in `conventions.humanLanguage`, product wording first (template), technical details in the
+   collapsed block at the end; post it with `--human` = the "En deux phrases" section.
    "Done" = tickets whose status advanced or whose PR merged in the window; "Today" = the agent's
    current queue; "Blocked" = blocked keys or `toFix` older than 2 days, or waiting on a handoff
    older than 1 day. Raise a `BLOCKER` decision for anything only the human can unblock.

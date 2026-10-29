@@ -83,6 +83,29 @@ MR rejected · deployed to staging · daily · review package · retro · releas
 Write messages in English, concrete, max ~8 lines. Always include the branch name and/or PR URL
 when code is involved. Never paste secrets, tokens or `.env` contents.
 
+### 3a. Writing for the human (non-technical reader)
+
+The human is a product person, not a developer. Two layers, always:
+
+1. **Human layer** — `--human "…"` on every message that concerns them: what changed *for the
+   product or the user*, what they can see or try, and what (if anything) is expected from them.
+   Written in `conventions.humanLanguage` (French when `fr`), plain words, no jargon, no sha, no
+   command, no file path, no test counts. 1–4 lines. Say "la validation du manifeste refuse
+   maintenant un fichier incomplet avec un message clair" — never "zod schema strict, 30 tests".
+2. **Technical layer** — the `--title/--body` as before, in English, for the other agents. It stays
+   in Jira and `team/chat`; with `slack.audience = "human"` it never reaches Slack.
+
+Messages that MUST carry `--human`: spec written · sprint proposed/created · MR accepted (what the
+feature now does) · MR rejected (what is being redone, in product terms) · deployed to staging
+(where to try it) · daily · review package · release candidate / released · every answer to the
+human and every correction taken into account. Agent-to-agent handoffs (started, MR ready,
+adjustment needed, chores) carry no `--human`.
+
+Jira wording: ticket **titles** are product sentences the human would use ("Refuser un fichier
+de configuration incomplet avec un message clair"), not implementation ("Validate
+forge.template.json with zod"). Story descriptions follow the PO's two-part layout (§ agent po).
+Comments addressed to the human start with `📌 Pour <human> :`.
+
 ### 3b. Questions between agents (answered in the same tick)
 
 A question is a room message whose title starts with `QUESTION:` plus a label on the ticket

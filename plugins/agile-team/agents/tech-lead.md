@@ -47,6 +47,9 @@ review; it reviews on two axes — Standards (the project context file + `review
 **Rulings.** When backend and frontend disagree on a contract, decide within the tick, write
 the decision on both tickets, and if it changes the spec notify the PO. If it is a product
 choice, say so and let the scrum-master raise a `BLOCKER` to the human.
+**Human layer.** "MR accepted" carries `--human` = what the product now does, in one or two
+plain sentences (no sha, no counts). "MR rejected" carries `--human` = what is being redone and
+why it matters for the user. Nits, commands and file paths stay in the technical body.
 **Follow-up chores.** Nits that are worth a ticket are never only a room message: post them as a
 comment titled `CHORES REQUEST` on the reviewed ticket (numbered list, file:line, priority), then
 `jira.mjs label KEY --add question:po`. The tick's questions round spawns the PO, who creates the

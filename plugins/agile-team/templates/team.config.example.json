@@ -25,37 +25,82 @@
       "done": "Done"
     }
   },
-  "slack": { "enabled": true, "channel": "#my-project-team" },
+  "slack": {
+    "enabled": true,
+    "channel": "#my-project-team",
+    "audience": "human"
+  },
   "repos": [
-    { "name": "my-api", "path": "../my-api", "url": "https://github.com/me/my-api", "owner": "dev-java", "component": "api" },
-    { "name": "my-web", "path": "../my-web", "url": "https://github.com/me/my-web", "owner": "dev-ts", "component": "web" }
+    {
+      "name": "my-api",
+      "path": "../my-api",
+      "url": "https://github.com/me/my-api",
+      "owner": "dev-java",
+      "component": "api"
+    },
+    {
+      "name": "my-web",
+      "path": "../my-web",
+      "url": "https://github.com/me/my-web",
+      "owner": "dev-ts",
+      "component": "web"
+    }
   ],
   "developers": [
     {
       "id": "dev-java",
       "displayName": "Backend dev (Java/Spring)",
       "stack": "Java 21, Spring Boot 3, Spring Modulith, Maven, Testcontainers",
-      "scope": ["my-api/**"],
+      "scope": [
+        "my-api/**"
+      ],
       "skills": [],
       "capacityPerSprint": 5,
-      "idleWork": ["raise unit coverage on domain/application", "ArchUnit rules for new modules", "flaky test hunt"]
+      "idleWork": [
+        "raise unit coverage on domain/application",
+        "ArchUnit rules for new modules",
+        "flaky test hunt"
+      ]
     },
     {
       "id": "dev-ts",
       "displayName": "TypeScript dev (CLI + Next.js)",
       "stack": "Node 22, TypeScript, Next.js 15, Vitest, Playwright",
-      "scope": ["my-web/**"],
-      "skills": ["vercel-react-best-practices"],
+      "scope": [
+        "my-web/**"
+      ],
+      "skills": [
+        "vercel-react-best-practices"
+      ],
       "capacityPerSprint": 5,
-      "idleWork": ["typecheck strictness", "Playwright smoke tests", "docs"]
+      "idleWork": [
+        "typecheck strictness",
+        "Playwright smoke tests",
+        "docs"
+      ]
     }
   ],
   "roles": {
-    "po": { "enabled": true },
-    "scrum-master": { "enabled": true },
-    "tech-lead": { "enabled": true },
-    "devops": { "enabled": true, "idleWork": ["CI speed", "dependabot", "staging health checks"] },
-    "ux-designer": { "enabled": true }
+    "po": {
+      "enabled": true
+    },
+    "scrum-master": {
+      "enabled": true
+    },
+    "tech-lead": {
+      "enabled": true
+    },
+    "devops": {
+      "enabled": true,
+      "idleWork": [
+        "CI speed",
+        "dependabot",
+        "staging health checks"
+      ]
+    },
+    "ux-designer": {
+      "enabled": true
+    }
   },
   "reviewChecklists": {
     "dev-java": "team/checklists/review-java.md",
@@ -71,12 +116,22 @@
   },
   "release": {
     "versionScheme": "semver",
-    "channels": ["npm", "ghcr", "fly", "cloudflare-pages"],
+    "channels": [
+      "npm",
+      "ghcr",
+      "fly",
+      "cloudflare-pages"
+    ],
     "autoPropose": true
   },
   "conventions": {
-    "branchPrefixes": ["feat", "fix", "chore"],
+    "branchPrefixes": [
+      "feat",
+      "fix",
+      "chore"
+    ],
     "commitStyle": "conventional-commits",
-    "language": "en"
+    "language": "en",
+    "humanLanguage": "fr"
   }
 }
