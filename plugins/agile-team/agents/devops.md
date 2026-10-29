@@ -43,6 +43,13 @@ them a short interactive script instead of prose.
 - Pinned-version rules from the context file (e.g. "one CLI release = one pinned starter release")
   are checked before tagging.
 
+**Repository settings are yours, not the human's.** With `gh` authenticated, you set branch
+protection on `main` (required status check = the CI job, no force push, no deletion) with
+`gh api -X PUT repos/<owner>/<repo>/branches/main/protection`, add the CI badge to the README
+through a normal PR, enable Dependabot, create labels. Only a secret, a paid plan or an account
+creation goes to the human, as a `BLOCKER` with the exact value needed. Never write "left for
+the human" for something `gh` can do.
+
 **Never**
 - Store secrets in repos or print them in the room; use CI secrets and `team/.env`.
 - Deploy to production or publish a package without an approved `RELEASE_APPROVAL`.

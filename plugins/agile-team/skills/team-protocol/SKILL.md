@@ -133,11 +133,38 @@ the next unblocked ticket of its own (`agent:<id>`), in priority order: `toFix` 
 `roles.<id>.idleWork` in the config (tests, docs, CI, refactors flagged by the tech lead) and say
 so in the room. Never start a ticket from an unapproved sprint.
 
+**Replies in natural language, French or English.** The human is not expected to know the
+syntax. `ok`, `oui`, `validé`, `approuvé`, `c'est bon`, `go` = approved; `non`, `refusé`,
+`rejeté`, `pas comme ça` = rejected, the rest of the message is the reason. A key in the message
+targets that decision; no key = the only open decision of that type, else ask once with `--mention`.
+`approuvé sauf FORGE-3 : …` / `approved except KEY: …` = approved with exceptions (sprint review).
+
 **Resolving.** At the start of every `/tick` and `/daily`, read `node $P/slack.mjs approvals`
 (and the latest `team/chat/*.md` if the human writes there). Match a human message to an open
 decision by key, or by type if only one of that type is open. Resolve it, announce
 "Decision KEY: APPROVED/REJECTED — resuming X", then continue the blocked path. If the human's
 message is ambiguous, ask once in the room with `--mention` and do not resolve.
+
+### 4b. Human feedback (anything that is not a decision)
+
+The human only validates and asks for corrections. Every human message in Slack or in
+`team/chat/*.md` that is not a reply to an open decision is **feedback** and is handled by the
+team, never left for the human to turn into a ticket:
+
+- Mentions a key (`FORGE-3`, `#3`, "le ticket 3") and asks for a change → that ticket goes to
+  `toFix` (from `awaitingValidation`, `inReview` or `done`; a `done` ticket reopens), relabel to
+  its last developer, comment the human's words verbatim as "Correction requested by <human>:
+  …", say `[po → <dev>] KEY · correction requested` in the room.
+- Describes something new ("il faudrait aussi…", "on pourrait…") → the PO writes a story in the
+  backlog (size, AC, owner hint) and answers `[po → <human>] FORGE-n · created from your
+  feedback: <title>` so the human sees it was heard. It enters a sprint through the normal
+  planning, never silently.
+- Asks a question → the right role answers in the room, `--mention`, within the tick.
+- Ambiguous → one clarifying question with `--mention`, nothing else; never guess on behalf of
+  the human.
+
+Processed messages are recorded by Slack `ts` (or chat timestamp) in `team/logs/feedback.json`
+so a message is handled once. Handled by the `tick` §1b and the `daily` step 2.
 
 ## 5. Handoffs between agents
 

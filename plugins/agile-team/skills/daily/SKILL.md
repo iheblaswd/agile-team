@@ -16,7 +16,7 @@ Load `team-protocol`. `$P = ${CLAUDE_PLUGIN_ROOT}/scripts`.
 1. Find the previous daily file in `team/dailies/` to compute the window (default 24h, 72h on
    the first weekday after a weekend). `node $P/snapshot.mjs --hours <window>`.
 2. Resolve any answered decisions exactly as `tick §1` does (the daily must never leave an
-   answered decision pending).
+   answered decision pending), then handle human feedback exactly as `tick §1b` does.
 3. Spawn `scrum-master` with the snapshot and today's/yesterday's `team/chat/*.md`. It writes
    `team/dailies/<YYYY-MM-DD>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/daily.md`:
 

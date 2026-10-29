@@ -33,6 +33,16 @@ stop. Else write it; delete it at the end (also on error).
 
 Re-run `jira.mjs blocked` to get the final list of keys to skip.
 
+## 1b. Human feedback (team-protocol §4b)
+
+Take `humanMessages` from the snapshot (and human lines in today's `team/chat/*.md`) minus the
+ones already in `team/logs/feedback.json` and minus the ones consumed as decisions above. If any
+remain, spawn `po` once with all of them. For each message it applies §4b (correction →
+`toFix` + relabel + comment; new need → backlog story; question → answer; ambiguous → one
+question back), records the `ts` in `team/logs/feedback.json`, and announces what it did in the
+room so the human sees the effect of every message. Corrections created here are eligible for
+the developers in §3 of the same tick (`toFix` comes first in their queue).
+
 ## 2. Planning day check
 
 If today is `sprint.planningDay`, no sprint is active, and no `SPRINT_APPROVAL` is open → run the
@@ -60,7 +70,8 @@ Questions must not wait for the next tick. After the developers finish:
 1. `node $P/jira.mjs issues --jql "project = <key> AND labels in (question:po, question:tech-lead, question:<dev-id>, …)"`
    (one `question:<addressee>` value per role/dev in the config) minus blocked keys. If empty, skip to §4.
 2. Group the tickets by addressee. Spawn each addressee **once, in parallel** (`po`,
-   `tech-lead`, or the named `developer`) with its tickets and the `team-protocol §3b` rules:
+   `tech-lead`, or the named `developer`) with its tickets and the `team-protocol §3b` rules
+   (a `question:po` whose comment is a `CHORES REQUEST` makes the PO create the chore tasks):
    read the `QUESTION:` comment, answer with an `ANSWER:` room message to the asker, update the
    ticket description / acceptance criteria, remove the `question:*` label. If it cannot answer
    from the context file or the ticket, it raises a `BLOCKER` decision (the ticket then becomes

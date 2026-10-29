@@ -39,7 +39,8 @@ export async function read({ hours = 24, fromHuman = false } = {}) {
   return msgs;
 }
 
-const DECISION_RE = /\b(approve[ds]?|ok|go|validated?|yes|lgtm|reject(ed)?|no|not yet|later|change)\b/i;
+// Decision-looking messages, English or French. Anything else from the human is feedback (team-protocol §4b).
+const DECISION_RE = /\b(approve[ds]?|approuv[ée]e?s?|accept[ée]e?s?|valid[ée]e?s?|validated?|ok|oui|yes|go|lgtm|c'est bon|reject(ed)?|rejet[ée]e?s?|refus[ée]e?s?|non|no|not yet|later|plus tard|change)\b/i;
 
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);

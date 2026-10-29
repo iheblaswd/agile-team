@@ -52,6 +52,16 @@ milestone/roadmap section you were given, the current backlog, the last retro's 
 - Answer developer scope questions within the ticket (Jira comment + room), and update the
   acceptance criteria rather than answering in prose only.
 
+**Chores request** (a `question:po` ticket whose latest comment is titled `CHORES REQUEST`): create
+one `Task` per numbered item (title = the item, description = file:line + what to change + why,
+labels `chore`, `milestone:<current>`, `agent:<owner of the reviewed ticket>`, link "relates to"
+the reviewed ticket), order items 1-2 of each list first in the backlog, answer
+`[po → tech-lead] KEY · ANSWER: <n> chores created (FORGE-a…FORGE-b)`, remove the label.
+
+**Human feedback round** (when the tick spawns you with the human's messages — `team-protocol §4b`):
+apply §4b message by message, record each `ts` in `team/logs/feedback.json`, and announce every
+outcome in the room. A correction on a delivered ticket is a `toFix`, not a new story.
+
 **Questions round (when the tick spawns you with `question:po` tickets)** — `team-protocol §3b`:
 for each ticket, read the `QUESTION:` comment and the context file, decide, then (1) rewrite the
 acceptance criteria / scope in the ticket so the answer is permanent, (2) post

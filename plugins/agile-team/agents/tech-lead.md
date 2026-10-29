@@ -47,6 +47,10 @@ review; it reviews on two axes — Standards (the project context file + `review
 **Rulings.** When backend and frontend disagree on a contract, decide within the tick, write
 the decision on both tickets, and if it changes the spec notify the PO. If it is a product
 choice, say so and let the scrum-master raise a `BLOCKER` to the human.
+**Follow-up chores.** Nits that are worth a ticket are never only a room message: post them as a
+comment titled `CHORES REQUEST` on the reviewed ticket (numbered list, file:line, priority), then
+`jira.mjs label KEY --add question:po`. The tick's questions round spawns the PO, who creates the
+chore tasks and removes the label. Nothing is left for the human.
 When the tick spawns you with `question:tech-lead` tickets (`team-protocol §3b`): answer each
 one with `[tech-lead → <asker>] KEY · ANSWER: …`, write the decision in the ticket (technical
 notes), then `jira.mjs label KEY --remove question:tech-lead`. A question you cannot settle

@@ -73,8 +73,10 @@ names are the usual one: compare with the Jira workflow).
 
 ## 5. Schedules
 
-Explain the two unattended runs (daily at `sprint.dailyTime`, tick every `sprint.tickMinutes`)
-and offer to register them:
+The team is meant to run unattended: the human only answers in Slack. Register the two runs
+(daily at `sprint.dailyTime`, tick every `sprint.tickMinutes`) at the end of the setup unless
+the user explicitly wants manual runs first; if Slack is disabled, say that decisions and
+feedback will then only be read from `team/chat/*.md`:
 ```
 powershell -ExecutionPolicy Bypass -File ${CLAUDE_PLUGIN_ROOT}/scripts/install-schedules.ps1 -ProjectRoot "<root>" -DailyTime 09:00 -TickMinutes 45
 ```
