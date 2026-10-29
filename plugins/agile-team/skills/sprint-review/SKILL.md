@@ -28,7 +28,8 @@ Metrics: planned <n> · delivered <m> · rejected MRs <r> · avg review turnarou
    `team/design/`. Ask devops (spawn it) for the staging state if not in the snapshot.
 3. Raise the gate: `room.mjs decision --type SPRINT_VALIDATION --summary "Sprint NN review — <m> tickets to validate" --body "<table>"`
    (no `--blocks`: nothing is blocked by a review). Tell the user in the chat.
-4. On the human's answer (via tick/daily or `/sprint-review` again):
+4. On the human's answer (via tick/daily or `/sprint-review` again), or when the human moved
+   tickets to `done` / `toFix` directly in Jira (`team-protocol §4c`, same outcome):
    - "approved KEY" with no exceptions → every listed ticket → `done`.
    - "approved except KEY1, KEY2: reason" → those → `toFix`, relabel to their last developer,
      comment the reason; the rest → `done`.

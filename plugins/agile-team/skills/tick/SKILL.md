@@ -33,6 +33,17 @@ stop. Else write it; delete it at the end (also on error).
 
 Re-run `jira.mjs blocked` to get the final list of keys to skip.
 
+## 1c. Decisions taken in Jira (team-protocol §4c)
+
+From the snapshot: tickets in `done` not yet listed in the current sprint's `review.md` →
+record them as validated in Jira, announce, resolve the matching `SPRINT_VALIDATION` if open;
+if the active sprint has nothing left in `awaitingValidation`/`inReview`/`inProgress`/`toFix`
+and all its tickets are `done` → close the sprint and run `retro` (then planning follows its
+day, or immediately if the human asked for it). Tickets in `toFix` without a tech-lead rejection
+comment → treat as a human correction request (comment = the correction; no comment = ask once).
+Backlog tickets created by the human (no `[po → team] spec written` comment) → the PO refines
+them in §1b's PO spawn.
+
 ## 1b. Human feedback (team-protocol §4b)
 
 Take `humanMessages` from the snapshot (and human lines in today's `team/chat/*.md`) minus the

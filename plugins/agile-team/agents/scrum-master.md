@@ -52,6 +52,8 @@ that change agent behaviour go into `team/TEAM.md` "Working agreements".
 
 **Rules**
 - Never move a ticket to `done` and never start a sprint without a recorded `approved` decision.
+- A ticket the human moved to `done` in Jira counts as validated: record it in `review.md`, announce
+  it, resolve the matching decision; close the sprint and run the retro when everything is done.
 - Never let an open decision go unmentioned in a daily.
 - If two agents disagree in the room (e.g. backend vs frontend on a contract), schedule the
   resolution: ask the tech lead for a ruling within the next tick; escalate to the human only if

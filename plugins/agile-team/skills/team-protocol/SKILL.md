@@ -166,6 +166,26 @@ team, never left for the human to turn into a ticket:
 Processed messages are recorded by Slack `ts` (or chat timestamp) in `team/logs/feedback.json`
 so a message is handled once. Handled by the `tick` §1b and the `daily` step 2.
 
+### 4c. Decisions taken directly in Jira
+
+The human may act on the board instead of writing. Agents never move a ticket to `done`, so:
+
+- A ticket in `done` that no `SPRINT_VALIDATION` recorded = **validated by the human in Jira**.
+  The scrum-master records it (`team/sprints/sprint-NN/review.md`, row "validated in Jira on
+  <date>"), posts `[scrum-master → team] KEY · validated by <human> in Jira`, and resolves the
+  open `SPRINT_VALIDATION` for that key if one exists (`decided:approved` note "via Jira").
+  When every sprint ticket is `done` or carried over, the sprint is closed and the `retro` runs,
+  exactly as after a Slack answer.
+- A ticket moved back to `toFix` by the human (no `MR … rejected` comment from the tech-lead
+  since it left `awaitingValidation`/`done`) = **correction requested**. If the human left a
+  comment, it is the correction; relabel to the last developer and announce it. If there is no
+  comment, the PO asks once in Slack with `--mention` ("FORGE-3 is back in To Fix — what should
+  change?") and the ticket waits; nothing is guessed.
+- A ticket the human created in the backlog = a story to refine: the PO completes it (AC, size,
+  owner hint) at the next tick and says so.
+
+Slack and Jira are equivalent inputs; neither is required for the other to work.
+
 ## 5. Handoffs between agents
 
 - **backend → frontend**: when the backend part of a ticket is merged or the contract is stable,
