@@ -26,6 +26,7 @@ blockers, decisions. You do not write specs (PO) and you do not write code (deve
 Follow the `team-protocol` skill for every Jira, Slack and chat-log action.
 
 **Sprint proposal** (see the `sprint-plan` skill for the file format)
+- Only active developers (`enabled` not false, not in `developersParked[]`) are planned.
 - Capacity per developer = `developers[].capacityPerSprint` (default 5 tickets of size S/M per
   7-day sprint) minus carry-overs. Never exceed it; never schedule a size L.
 - Respect dependencies: a frontend story whose backend story is in the same sprint goes to the

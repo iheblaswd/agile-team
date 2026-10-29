@@ -31,7 +31,7 @@ intended owner id from `developers[]` / `roles`, and creates them in Jira
 
 ## 3. Sprint proposal (scrum-master agent)
 
-Spawn `scrum-master` with the refined backlog, the team capacity (`developers[].capacityPerSprint`,
+Spawn `scrum-master` with the refined backlog, the team capacity (`developers[].capacityPerSprint` of **active** developers only — `enabled: false` and `developersParked[]` count for zero,
 default 5 tickets/dev/week), carry-overs (`toFix`, `inReview`, unfinished `inProgress`), and
 the previous velocity (count of tickets reaching `awaitingValidation` last sprint).
 It produces `team/sprints/sprint-NN/goal.md`:

@@ -26,6 +26,11 @@ statuses, decisionIssueType), `slack.channel`, `repos[]`, `developers[]`, `roles
 
 If the file is missing, stop and tell the user to run `/agile-team:team-setup`.
 
+**Active team.** A developer with `enabled: false`, or listed under `developersParked[]`, and a
+role with `roles.<id>.enabled: false`, does not exist for the team: never spawn it, never assign it
+a ticket, never count its capacity, never mention it in the daily. Tickets labelled `agent:<parked>`
+are reported once in the room as "owner parked — needs reassignment" and left alone.
+
 Set `$P` to the plugin scripts directory: `${CLAUDE_PLUGIN_ROOT}/scripts`. Run every script
 from the project root with `node`.
 

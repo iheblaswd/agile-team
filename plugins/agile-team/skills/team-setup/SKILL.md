@@ -25,7 +25,10 @@ AskUserQuestion, grouped:
 2. Slack channel name; whether Slack is used at all.
 3. Developers: id, display name, stack, scope (paths/repos they own), project skills to load
    (e.g. `forge-spring`). Default is two: a backend dev and a frontend/TS dev.
-4. Optional roles: ux-designer, devops (default both enabled).
+4. Optional roles: ux-designer, devops (default both enabled). Suggest disabling a role or a
+   developer whose scope does not exist yet (e.g. a backend dev before the backend repo is
+   created): `roles.<id>.enabled=false`, or move the developer entry to `developersParked[]`
+   with `enabled: false` so it can be restored later with one edit.
 5. Sprint length (default 7 days), planning day, review day, daily time, timezone.
 6. Human: name, short id (used in labels, e.g. `iheb`), Slack user id (can be filled later).
 

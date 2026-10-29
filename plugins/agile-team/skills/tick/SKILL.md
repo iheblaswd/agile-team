@@ -42,7 +42,8 @@ If today is `sprint.reviewDay`, a sprint is active and no `SPRINT_VALIDATION` is
 
 ## 3. Developers (parallel)
 
-For each `developers[]` entry, compute its queue from `byAgent[id]` minus blocked keys, ordered
+For each **active** `developers[]` entry (skip `enabled: false` and anything under
+`developersParked[]` — see `team-protocol` §0), compute its queue from `byAgent[id]` minus blocked keys, ordered
 `toFix` → `inProgress` → `selectedForSprint`. If the queue is empty, use `roles.<id>.idleWork`
 and announce "no ticket available, doing: <idle work>" (only once per day — check today's chat log).
 
