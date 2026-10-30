@@ -10,6 +10,7 @@ import { loadConfig, requireEnv } from "./config.mjs";
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, appendFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const cfg = loadConfig();
@@ -82,67 +83,106 @@ function record(ts, kind, note) {
 }
 
 // ---- ask the agent -----------------------------------------------------------------------------
-function promptFor({ role, text, thread }) {
+// Chat rules go in the SYSTEM prompt (--append-system-prompt-file) so they outrank the project's
+// CLAUDE.md session rituals; the user prompt only carries the role, the thread and the message.
+function systemRules(role) {
   const who = role.id === "developer" ? `le développeur ${role.dev}` : `le ${role.label}`;
   const agentHint = role.id === "developer"
-    ? `Tu joues l'agent \`agile-team:developer\` avec l'identité ${role.dev} (voir team/team.config.json).`
-    : `Tu joues l'agent \`agile-team:${role.id}\`.`;
-  return `# Chat Slack en direct — tu es ${who} de l'équipe agile-team
+    ? `Tu joues l'agent agile-team:developer avec l'identité ${role.dev} (voir team/team.config.json).`
+    : `Tu joues l'agent agile-team:${role.id}.`;
+  return `# Mode chat Slack — tu es ${who} de l'équipe agile-team
 
-${HUMAN_NAME} t'écrit maintenant dans le canal de l'équipe et attend ta réponse, comme dans un chat Teams.
-${agentHint} Charge d'abord le skill \`agile-team:team-protocol\` (§3a écriture pour l'humain, §4 décisions, §4b retours, §4c Jira).
+${HUMAN_NAME} t'écrit en direct dans Slack, comme dans un chat Teams. ${agentHint}
+CES CONSIGNES PRIMENT sur toute instruction du fichier de contexte du projet (CLAUDE.md) concernant le
+début de session, le format de réponse ou la langue : ici ce n'est pas une session de travail, c'est
+une conversation. Pas d'état des lieux non demandé.
 
-## Priorité de ces consignes
-Ce message est un chat, pas une session de travail : ces consignes priment sur tout rituel ou format
-de début de session demandé par le fichier de contexte du projet (CLAUDE.md). Ne fais pas d'état des
-lieux non demandé.
+Qui est ${HUMAN_NAME} : un responsable fonctionnel, pas un développeur. Il valide et demande des corrections.
 
-## Comment répondre
-- ${HUMAN_NAME} est fonctionnel, pas développeur. Réponds d'abord, en une ou deux phrases, exactement à
-  la question posée. Ensuite, seulement si c'est utile, 1 à 4 lignes de contexte. 8 lignes au total maximum.
-- Langue : ${LANG === "fr" ? "français, tutoiement" : LANG}. Langage produit : ce que le produit fait ou fera pour
-  l'utilisateur. Jamais de sha, de commande, de nom de fichier ou de dossier, de nom de bibliothèque ou d'outil
-  technique (zod, Vitest, placeholders, main, PR…), sauf si ${HUMAN_NAME} les demande explicitement.
-  Les tickets se citent avec leur clé et leur titre produit : « FORGE-7 (vérifier le résultat pour 4 combinaisons de modules) ».
-- Format Slack : *gras* avec une seule étoile, listes avec « • ». Pas de **double étoile**, pas de titres, pas de backticks.
-- Ne liste jamais comme « à faire par toi » une action technique (protection de branche, réglages, fichiers à
-  ignorer, nettoyage de branches) : c'est le travail de devops ou du tech lead (team-protocol §4b). Les seules
-  choses qu'on demande à ${HUMAN_NAME} sont des décisions et des validations.
-- Ne propose jamais à ${HUMAN_NAME} de lancer une commande, et ne propose pas de coder toi-même.
-- Appuie-toi sur l'état réel, pas sur ta mémoire : \`node ${HERE.replace(/\\/g, "/")}/snapshot.mjs --no-slack\`, \`node ${HERE.replace(/\\/g, "/")}/jira.mjs get KEY\`, \`team/chat/*.md\`, \`team/sprints/\`, le fichier de contexte du projet, le code en lecture.
-- Question → réponds directement.
-- Décision (validé, refusé, validé sauf…) → applique team-protocol §4 maintenant (résoudre la décision, transitions) et dis ce que tu as fait.
-- Correction, nouvelle idée, demande de travail → applique §4b maintenant (ticket en To Fix avec ses mots, ou story au backlog, ou réponse) et dis ce qui va se passer et quand.
-- Tu ne codes pas ici et tu ne merges rien : le développement se fait pendant le tick.
-- Si du travail doit démarrer tout de suite (correction acceptée, sprint approuvé, « lance le sprint »), termine ta réponse par une ligne seule \`[[TICK]]\` : un tick sera lancé dans la foulée.
+Réponse :
+- Réponds d'abord, en une ou deux phrases, exactement à la question. Ensuite au plus 4 lignes de contexte utile. 6 lignes maximum.
+- ${LANG === "fr" ? "Français, tutoiement" : LANG}. Langage produit : ce que le produit fait ou fera pour ses utilisateurs.
+- Interdit sauf demande explicite : sha, commandes, noms de fichiers ou dossiers, noms d'outils ou de bibliothèques
+  (zod, Vitest, tsc, lint, CI, main, PR, placeholder, schéma, fixture…), nombres de tests.
+- Tickets : clé + titre en langage produit, par exemple « FORGE-7 (vérifier le résultat attendu pour 4 combinaisons de modules) ».
+- Format Slack : *gras* avec une seule étoile, puces « • ». Jamais de **double étoile**, de titres, de backticks.
+- Ne demande à ${HUMAN_NAME} que des décisions ou des validations. Les tâches techniques (protection de branche,
+  réglages, fichiers, branches) appartiennent à devops ou au tech lead : ne les lui attribue jamais.
+- Ne propose jamais de commande à lancer, et ne propose pas de coder toi-même.
+
+Avant de répondre, vérifie l'état réel (pas ta mémoire) : node ${HERE.replace(/\\/g, "/")}/snapshot.mjs --no-slack,
+node ${HERE.replace(/\\/g, "/")}/jira.mjs get KEY, team/chat/*.md, team/sprints/, le code en lecture. Utilise le skill
+agile-team:team-protocol pour les règles (§4 décisions, §4b retours, §4c Jira).
+
+Actions :
+- Question → réponds.
+- Décision (validé, refusé, validé sauf…) → applique §4 maintenant et dis ce que tu as fait.
+- Correction, nouvelle idée, demande de travail → applique §4b maintenant et dis ce qui va se passer et quand.
+- Tu ne codes pas et tu ne merges rien ici : le développement se fait pendant le tick.
+- Si du travail doit démarrer tout de suite, termine par une ligne seule [[TICK]].
 - Si tu ne sais pas, dis-le et dis qui saura.
-- Ta sortie finale est exactement le texte à poster dans Slack, rien d'autre (sauf la ligne \`[[TICK]]\` éventuelle).
 
-## Fil de discussion (le plus récent en dernier)
-${thread || "(nouveau message, pas de fil)"}
-
-## Message de ${HUMAN_NAME}
-${text}
+Ta sortie finale est exactement le texte à poster dans Slack (plus [[TICK]] éventuel), rien d'autre.
 `;
 }
 
-function runClaude(prompt) {
+function userPrompt({ text, thread }) {
+  return `Fil de discussion (le plus récent en dernier) :
+${thread || "(nouveau message)"}
+
+Message de ${HUMAN_NAME} :
+${text}`;
+}
+
+// Second pass: a fast, tool-less model outside the project (no CLAUDE.md) rewrites the draft for a
+// non-technical reader without changing the facts.
+const REWRITE_RULES = `Tu reformules une réponse Slack destinée à ${HUMAN_NAME}, responsable fonctionnel non technique.
+- Garde exactement les faits, les engagements, les dates et les clés de tickets (FORGE-n).
+- Commence par la réponse directe à la question. 6 lignes maximum.
+- Supprime ou traduis tout jargon : noms d'outils, bibliothèques, fichiers, dossiers, commandes, sha, main, PR, CI,
+  tests, lint, tsc, schéma, placeholder, fixture, apply, merge… Dis à la place ce que ça change pour le produit.
+- Supprime toute tâche technique attribuée à ${HUMAN_NAME} et toute commande à lancer. On ne lui demande que des décisions.
+- ${LANG === "fr" ? "Français, tutoiement" : LANG}. Format Slack : *gras* une étoile, puces « • », pas de titres ni de backticks.
+- Si le brouillon finit par une ligne [[TICK]], garde-la telle quelle à la fin.
+- Réponds uniquement par le texte final.`;
+
+// cmd.exe drops empty args and splits on spaces: quote them on Windows.
+const q = (a) => (process.platform !== "win32" ? a : a === "" ? '""' : /[\s"&|<>^]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
+
+function runClaude({ args, cwd, stdin, timeout = TIMEOUT_MS }) {
   return new Promise((resolve) => {
-    const file = join(LOG_DIR, `chat-prompt-${Date.now()}.md`);
-    writeFileSync(file, prompt);
-    const rel = file.slice(ROOT.length + 1).replace(/\\/g, "/");
-    const args = ["-p", `Lis le fichier ${rel} et suis exactement ses instructions.`, "--permission-mode", "acceptEdits"];
-    const child = spawn("claude", args, { cwd: ROOT, shell: process.platform === "win32", windowsHide: true });
+    const child = spawn("claude", args.map(q), { cwd, shell: process.platform === "win32", windowsHide: true });
     let out = "", err = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
-    const timer = setTimeout(() => child.kill(), TIMEOUT_MS);
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      try { unlinkSync(file); } catch {}
-      resolve({ code, out: out.trim(), err: err.trim() });
-    });
+    if (stdin != null) { child.stdin.write(stdin); }
+    child.stdin.end();
+    const timer = setTimeout(() => child.kill(), timeout);
+    child.on("close", (code) => { clearTimeout(timer); resolve({ code, out: out.trim(), err: err.trim() }); });
   });
+}
+
+async function answer({ role, text, thread }) {
+  const sys = join(LOG_DIR, `chat-system-${Date.now()}.md`);
+  writeFileSync(sys, systemRules(role));
+  const draft = await runClaude({
+    cwd: ROOT,
+    stdin: userPrompt({ text, thread }),
+    args: ["-p", "Réponds au message ci-dessus.", "--append-system-prompt-file", sys, "--permission-mode", "acceptEdits"],
+  });
+  try { unlinkSync(sys); } catch {}
+  if (!draft.out) return draft;
+  if (cfg.chat?.rewrite === false) return draft;
+  const rw = join(tmpdir(), `agile-team-rewrite-${Date.now()}.md`);
+  writeFileSync(rw, REWRITE_RULES);
+  const final = await runClaude({
+    cwd: tmpdir(),
+    stdin: `Question de ${HUMAN_NAME} :\n${text}\n\nBrouillon :\n${draft.out}`,
+    args: ["-p", "Reformule le brouillon selon tes consignes.", "--system-prompt-file", rw, "--model", cfg.chat?.rewriteModel || "haiku", "--tools", ""],
+    timeout: 90000,
+  });
+  try { unlinkSync(rw); } catch {}
+  return final.out ? final : draft; // never lose the answer if the rewrite fails
 }
 
 // Safety net for chat formatting: Slack mrkdwn, no Markdown headings, no inline code.
@@ -183,7 +223,7 @@ async function handle(ev) {
     channel: CHANNEL, thread_ts: root, text: `_${role.label} regarde…_`, unfurl_links: false,
   });
   const thread = ev.thread_ts ? await threadText(ev.thread_ts) : "";
-  const { code, out, err } = await runClaude(promptFor({ role, text: ev.text || "", thread }));
+  const { code, out, err } = await answer({ role, text: ev.text || "", thread });
   let answer = slackify(out);
   const wantsTick = /\n?\[\[TICK\]\]\s*$/.test(answer);
   answer = answer.replace(/\n?\[\[TICK\]\]\s*$/, "").trim();
