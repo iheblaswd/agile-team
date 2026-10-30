@@ -209,6 +209,16 @@ The human may act on the board instead of writing. Agents never move a ticket to
 
 Slack and Jira are equivalent inputs; neither is required for the other to work.
 
+### 4d. Live chat (optional, `slack-listen.mjs`)
+
+When the chat listener runs, every human message in the channel gets an answer in its thread
+within about a minute, from the role it names ("PO, …", "tech lead …", "dev-ts …") or the
+Scrum Master by default; a thread keeps talking to the same role. The agent answers from the real
+state, applies decisions (§4), corrections and new needs (§4b) immediately, never codes or merges,
+and ends with `[[TICK]]` when work must start now (the listener then starts the tick task). Handled
+messages are recorded in `team/logs/feedback.json` with `by: "chat"`; the tick skips them. If the
+listener is down, nothing is lost: the tick handles the message at its next run.
+
 ## 5. Handoffs between agents
 
 - **backend → frontend**: when the backend part of a ticket is merged or the contract is stable,

@@ -71,6 +71,13 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/snapshot.mjs --hours 1
 Report each as pass/fail with the exact error if any, and fix config problems (wrong status
 names are the usual one: compare with the Jira workflow).
 
+## 4b. Live chat (optional)
+
+If the user wants to talk to the team in Slack and get answers right away: create the Slack app
+from `${CLAUDE_PLUGIN_ROOT}/templates/slack-app-manifest.json` (Socket Mode on, bot event
+`message.channels`), create an App-Level Token with `connections:write` → `SLACK_APP_TOKEN`
+in `team/.env`, then add `-Chat` to the schedules command below. Needs Node >= 22.4.
+
 ## 5. Schedules
 
 The team is meant to run unattended: the human only answers in Slack. Register the two runs

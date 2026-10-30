@@ -1,0 +1,35 @@
+{
+  "display_information": {
+    "name": "agile-team",
+    "description": "AI Scrum team: live chat and team updates in the project channel"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "agile-team",
+      "always_online": true
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "chat:write",
+        "channels:history",
+        "channels:read",
+        "users:read"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "bot_events": [
+        "message.channels"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": false
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
+  }
+}

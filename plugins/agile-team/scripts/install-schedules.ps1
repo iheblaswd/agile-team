@@ -1,6 +1,7 @@
 # Registers Windows Scheduled Tasks that run the team ceremonies unattended with Claude Code.
 #   powershell -ExecutionPolicy Bypass -File install-schedules.ps1 -ProjectRoot "D:\projects\forge" [-DailyTime 09:00] [-TickMinutes 60] [-From 08:00] [-To 19:00] [-Weekdays] [-Prefix forge]
 #   -From/-To bound the tick to working hours (default 08:00-19:00); -Weekdays limits daily and tick to Monday-Friday.
+#   -Chat also registers the live Slack chat listener (slack-listen.mjs): starts at logon, restarts if it stops.
 #   powershell -ExecutionPolicy Bypass -File install-schedules.ps1 -ProjectRoot "D:\projects\forge" -Uninstall
 # Requirements: `claude` on PATH (Claude Code), team/team.config.json and team/.env filled, plugin installed in that project.
 param(
@@ -10,6 +11,7 @@ param(
   [string]$From = "08:00",
   [string]$To = "19:00",
   [switch]$Weekdays,
+  [switch]$Chat,
   [string]$Prefix = "",
   [switch]$Uninstall
 )
@@ -55,6 +57,25 @@ foreach ($t in $tasks) {
   $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $t.Trigger -Settings $settings -Description "agile-team plugin: $($t.Skill) for $ProjectRoot" | Out-Null
   Write-Host "Registered $($t.Name) -> $($t.Skill)"
+}
+
+# Live chat listener (Teams-style answers in Slack). Always removed on -Uninstall or when -Chat is not given.
+$chatName = "agile-team-$Prefix-chat"
+if (Get-ScheduledTask -TaskName $chatName -ErrorAction SilentlyContinue) {
+  Stop-ScheduledTask -TaskName $chatName -ErrorAction SilentlyContinue
+  Unregister-ScheduledTask -TaskName $chatName -Confirm:$false
+  Write-Host "Removed $chatName"
+}
+if ($Chat -and -not $Uninstall) {
+  $listener = Join-Path $PSScriptRoot "slack-listen.mjs"
+  $chatLog = Join-Path $logDir "chat-process.log"
+  $chatCmd = "cd /d `"$ProjectRoot`" && node `"$listener`" >> `"$chatLog`" 2>&1"
+  $chatAction = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $chatCmd"
+  $chatTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+  $chatSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+  Register-ScheduledTask -TaskName $chatName -Action $chatAction -Trigger $chatTrigger -Settings $chatSettings -Description "agile-team plugin: live Slack chat for $ProjectRoot" | Out-Null
+  Start-ScheduledTask -TaskName $chatName
+  Write-Host "Registered and started $chatName (live Slack chat). Log: $logDir\chat.log"
 }
 
 if (-not $Uninstall) {
