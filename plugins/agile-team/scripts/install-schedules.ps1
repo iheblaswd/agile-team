@@ -51,7 +51,8 @@ foreach ($t in $tasks) {
   $log = Join-Path $logDir ("$($t.Skill.Split(':')[1]).log")
   $cmd = "cd /d `"$ProjectRoot`" && claude -p `"$($t.Skill)`" --permission-mode acceptEdits >> `"$log`" 2>&1"
   $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $cmd"
-  $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -StartWhenAvailable -MultipleInstances IgnoreNew
+  # Laptops: default task settings refuse to start on battery and kill the run when unplugged — the team must not depend on the charger.
+  $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   Register-ScheduledTask -TaskName $t.Name -Action $action -Trigger $t.Trigger -Settings $settings -Description "agile-team plugin: $($t.Skill) for $ProjectRoot" | Out-Null
   Write-Host "Registered $($t.Name) -> $($t.Skill)"
 }
