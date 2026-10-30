@@ -32,9 +32,14 @@ if ($Weekdays) {
 # Repeat the tick every $TickMinutes between $From and $To only.
 $tickTrigger.Repetition = (New-ScheduledTaskTrigger -Once -At $From -RepetitionInterval (New-TimeSpan -Minutes $TickMinutes) -RepetitionDuration $window).Repetition
 
+# Laptops: Task Scheduler never catches up missed *repetitions*, so the tick also fires 2 minutes after
+# every logon (the tick itself runs the daily when today's is missing — see tick skill §2).
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+$logonTrigger.Delay = "PT2M"
+
 $tasks = @(
-  @{ Name = "agile-team-$Prefix-daily"; Skill = "/agile-team:daily";  Trigger = $dailyTrigger },
-  @{ Name = "agile-team-$Prefix-tick";  Skill = "/agile-team:tick";   Trigger = $tickTrigger }
+  @{ Name = "agile-team-$Prefix-daily"; Skill = "/agile-team:daily";  Trigger = @($dailyTrigger) },
+  @{ Name = "agile-team-$Prefix-tick";  Skill = "/agile-team:tick";   Trigger = @($tickTrigger, $logonTrigger) }
 )
 
 foreach ($t in $tasks) {
@@ -55,7 +60,7 @@ if (-not $Uninstall) {
   Write-Host ""
   $when = if ($Weekdays) { "Monday-Friday" } else { "every day" }
   Write-Host "Daily runs at $DailyTime, tick every $TickMinutes min between $From and $To, $when. Logs in $logDir."
-  Write-Host "First tick: next $From (run 'claude -p /agile-team:tick' now if you want one immediately)."
+  Write-Host "The tick also runs 2 min after each logon, and runs the daily itself when today's is missing."
   Write-Host "The tick skips itself when a previous run is still going (MultipleInstances=IgnoreNew)."
   Write-Host "If a run stops on a permission prompt, add the needed Bash(...) allow rules to .claude/settings.json (see README)."
 }

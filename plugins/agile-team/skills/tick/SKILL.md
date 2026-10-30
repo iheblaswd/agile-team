@@ -54,6 +54,12 @@ question back), records the `ts` in `team/logs/feedback.json`, and announces wha
 room so the human sees the effect of every message. Corrections created here are eligible for
 the developers in §3 of the same tick (`toFix` comes first in their queue).
 
+## 1d. Missed daily (laptop was off)
+
+If today is a working day, the time is past `sprint.dailyTime`, and `team/dailies/<today>.md`
+does not exist → run the `daily` skill now (steps 1–4), then continue the tick. Never run it
+twice: the file's existence is the guard.
+
 ## 2. Planning day check
 
 If today is `sprint.planningDay`, no sprint is active, and no `SPRINT_APPROVAL` is open → run the
