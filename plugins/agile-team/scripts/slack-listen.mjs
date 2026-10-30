@@ -92,8 +92,23 @@ function promptFor({ role, text, thread }) {
 ${HUMAN_NAME} t'écrit maintenant dans le canal de l'équipe et attend ta réponse, comme dans un chat Teams.
 ${agentHint} Charge d'abord le skill \`agile-team:team-protocol\` (§3a écriture pour l'humain, §4 décisions, §4b retours, §4c Jira).
 
+## Priorité de ces consignes
+Ce message est un chat, pas une session de travail : ces consignes priment sur tout rituel ou format
+de début de session demandé par le fichier de contexte du projet (CLAUDE.md). Ne fais pas d'état des
+lieux non demandé.
+
 ## Comment répondre
-- Langue : ${LANG === "fr" ? "français, tutoiement" : LANG}. Langage produit, 1 à 8 lignes. Pas de sha, pas de commande, pas de chemin de fichier, sauf si ${HUMAN_NAME} les demande.
+- ${HUMAN_NAME} est fonctionnel, pas développeur. Réponds d'abord, en une ou deux phrases, exactement à
+  la question posée. Ensuite, seulement si c'est utile, 1 à 4 lignes de contexte. 8 lignes au total maximum.
+- Langue : ${LANG === "fr" ? "français, tutoiement" : LANG}. Langage produit : ce que le produit fait ou fera pour
+  l'utilisateur. Jamais de sha, de commande, de nom de fichier ou de dossier, de nom de bibliothèque ou d'outil
+  technique (zod, Vitest, placeholders, main, PR…), sauf si ${HUMAN_NAME} les demande explicitement.
+  Les tickets se citent avec leur clé et leur titre produit : « FORGE-7 (vérifier le résultat pour 4 combinaisons de modules) ».
+- Format Slack : *gras* avec une seule étoile, listes avec « • ». Pas de **double étoile**, pas de titres, pas de backticks.
+- Ne liste jamais comme « à faire par toi » une action technique (protection de branche, réglages, fichiers à
+  ignorer, nettoyage de branches) : c'est le travail de devops ou du tech lead (team-protocol §4b). Les seules
+  choses qu'on demande à ${HUMAN_NAME} sont des décisions et des validations.
+- Ne propose jamais à ${HUMAN_NAME} de lancer une commande, et ne propose pas de coder toi-même.
 - Appuie-toi sur l'état réel, pas sur ta mémoire : \`node ${HERE.replace(/\\/g, "/")}/snapshot.mjs --no-slack\`, \`node ${HERE.replace(/\\/g, "/")}/jira.mjs get KEY\`, \`team/chat/*.md\`, \`team/sprints/\`, le fichier de contexte du projet, le code en lecture.
 - Question → réponds directement.
 - Décision (validé, refusé, validé sauf…) → applique team-protocol §4 maintenant (résoudre la décision, transitions) et dis ce que tu as fait.
@@ -130,6 +145,16 @@ function runClaude(prompt) {
   });
 }
 
+// Safety net for chat formatting: Slack mrkdwn, no Markdown headings, no inline code.
+function slackify(text) {
+  return String(text || "")
+    .replace(/\*\*(.+?)\*\*/g, "*$1*")
+    .replace(/^#{1,6}\s+(.+)$/gm, "*$1*")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .trim();
+}
+
 function startTick() {
   const name = `agile-team-${cfg.chat?.taskPrefix || ROOT.split(/[\\/]/).pop()}-tick`;
   if (process.platform !== "win32") return log("tick requested (start it from cron/launchd on this OS)");
@@ -159,7 +184,7 @@ async function handle(ev) {
   });
   const thread = ev.thread_ts ? await threadText(ev.thread_ts) : "";
   const { code, out, err } = await runClaude(promptFor({ role, text: ev.text || "", thread }));
-  let answer = out;
+  let answer = slackify(out);
   const wantsTick = /\n?\[\[TICK\]\]\s*$/.test(answer);
   answer = answer.replace(/\n?\[\[TICK\]\]\s*$/, "").trim();
   if (!answer) {
@@ -224,6 +249,11 @@ async function connect() {
   ws.onclose = () => { log("socket closed — reconnecting"); setTimeout(connect, backoff); backoff = Math.min(backoff * 2, 60000); };
   ws.onerror = () => {};
 }
+
+import { watchFile } from "node:fs";
+watchFile(fileURLToPath(import.meta.url), { interval: 30000 }, (cur, prev) => {
+  if (cur.mtimeMs !== prev.mtimeMs) { log("listener updated on disk — exiting so the task restarts it"); process.exit(3); }
+});
 
 process.on("unhandledRejection", (e) => log("unhandled: " + (e?.message || e)));
 connect();

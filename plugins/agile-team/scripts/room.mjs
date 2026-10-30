@@ -44,7 +44,8 @@ function roleLabel(id) { return ROLE_FR[id] || (id?.startsWith("dev-") ? `Dével
 // Slack text for the human: no brackets, no sha, no commands — just the human line(s) and where to look.
 function humanSlackText({ from, ticket, human }) {
   const where = ticket ? ` · ${ticket}` : "";
-  return `*${roleLabel(from)}${where}*\n${String(human).replace(/\\n/g, "\n")}`;
+  const body = String(human).replace(/\\n/g, "\n").replace(/\*\*(.+?)\*\*/g, "*$1*").replace(/`([^`\n]+)`/g, "$1");
+  return `*${roleLabel(from)}${where}*\n${body}`;
 }
 
 async function say(a) {
