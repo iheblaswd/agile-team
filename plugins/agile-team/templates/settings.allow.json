@@ -11,7 +11,7 @@
       "Bash(docker *)",
       "Read(**)",
       "Edit(**)",
-      "Write(**)",
+      "Edit(**)",
       "Skill(*)"
     ],
     "deny": [
