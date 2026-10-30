@@ -69,8 +69,10 @@ if (Get-ScheduledTask -TaskName $chatName -ErrorAction SilentlyContinue) {
 if ($Chat -and -not $Uninstall) {
   $listener = Join-Path $PSScriptRoot "slack-listen.mjs"
   $chatLog = Join-Path $logDir "chat-process.log"
-  $chatCmd = "cd /d `"$ProjectRoot`" && node `"$listener`" >> `"$chatLog`" 2>&1"
-  $chatAction = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $chatCmd"
+  # Task Scheduler only restarts a task that fails to *launch*, not one whose process exits, so the
+  # listener runs inside an endless loop: it exits on purpose when the plugin is updated, and comes back 5 s later.
+  $loop = "Set-Location -LiteralPath '$ProjectRoot'; while (`$true) { & node '$listener' *>> '$chatLog'; Start-Sleep -Seconds 5 }"
+  $chatAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"$loop`""
   $chatTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
   $chatSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
   Register-ScheduledTask -TaskName $chatName -Action $chatAction -Trigger $chatTrigger -Settings $chatSettings -Description "agile-team plugin: live Slack chat for $ProjectRoot" | Out-Null
