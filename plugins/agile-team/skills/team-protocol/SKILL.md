@@ -106,6 +106,15 @@ de configuration incomplet avec un message clair"), not implementation ("Validat
 forge.template.json with zod"). Story descriptions follow the PO's two-part layout (§ agent po).
 Comments addressed to the human start with `📌 Pour <human> :`.
 
+### 3a-bis. The team chat in Slack
+
+With `slack.audience = "human"`, every agent-to-agent message also appears in Slack as one short
+French chat line, under the agent's own name (`room.mjs` → `persona.mjs activityLine`): started,
+ready for review (with the PR link), review accepted / sent back, merged, question, answer, blocked,
+deployed. So the human sees the team work in real time without reading technical text. For this to
+read well: the titles of `QUESTION:` and `ANSWER:` messages are written in `conventions.humanLanguage`
+in product words (they are shown as is), and PR links go in `--body`.
+
 ### 3b. Questions between agents (answered in the same tick)
 
 A question is a room message whose title starts with `QUESTION:` plus a label on the ticket

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Slack client for the agile-team plugin. Zero dependencies.
-//   node slack.mjs post "text" [--thread <ts>] [--mention]     # --mention prefixes the human's @handle
+//   node slack.mjs post "text" [--thread <ts>] [--mention] [--as <agent-id>]   # --as: post under that agent's name and icon
 //   node slack.mjs read [--hours 24] [--from-human]             # recent channel messages, newest last
 //   node slack.mjs approvals [--hours 72]                       # human messages that look like decisions
 // Needs SLACK_BOT_TOKEN (scopes: chat:write, channels:history, channels:read) and SLACK_CHANNEL_ID in team/.env.
@@ -23,10 +23,13 @@ async function api(method, body) {
   return json;
 }
 
-export async function post(text, { thread, mention } = {}) {
+import { persona } from "./persona.mjs";
+
+export async function post(text, { thread, mention, as } = {}) {
   const prefix = mention && humanUserId ? `<@${humanUserId}> ` : "";
   const body = { channel, text: prefix + text, unfurl_links: false };
   if (thread) body.thread_ts = thread;
+  if (as) { const p = persona(as); body.username = p.name; body.icon_emoji = p.icon; } // needs chat:write.customize
   const r = await api("chat.postMessage", body);
   return { ts: r.ts, channel: r.channel };
 }
@@ -46,7 +49,7 @@ async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const a = parseArgs(rest);
   switch (cmd) {
-    case "post": return post(a._[0], { thread: a.thread, mention: !!a.mention });
+    case "post": return post(a._[0], { thread: a.thread, mention: !!a.mention, as: a.as });
     case "read": return read({ hours: Number(a.hours || 24), fromHuman: !!a["from-human"] });
     case "approvals": {
       const msgs = await read({ hours: Number(a.hours || 72), fromHuman: true });

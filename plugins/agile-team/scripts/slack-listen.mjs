@@ -11,6 +11,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, appendFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
+import { persona } from "./persona.mjs";
 import { fileURLToPath } from "node:url";
 
 const cfg = loadConfig();
@@ -28,6 +29,7 @@ const CHANNEL = process.env.SLACK_CHANNEL_ID;
 const HUMAN = process.env.SLACK_HUMAN_USER_ID || cfg.human?.slackUserId || "";
 const HUMAN_NAME = cfg.human?.name || "the human";
 const LANG = cfg.conventions?.humanLanguage || "fr";
+const PERSONAS = cfg.slack?.personas === true;
 const TIMEOUT_MS = (cfg.chat?.timeoutSeconds || 240) * 1000;
 const LOG_DIR = join(ROOT, "team", "logs");
 mkdirSync(LOG_DIR, { recursive: true });
@@ -204,6 +206,7 @@ function startTick() {
 
 // ---- message handling (serial queue) -----------------------------------------------------------
 const threadRoles = new Map(); // thread ts -> role, so a thread keeps talking to the same agent
+let lastTop = null;            // last top-level role, so a channel conversation keeps its agent for 10 min
 const queue = [];
 let busy = false;
 
@@ -216,11 +219,17 @@ async function threadText(threadTs) {
 
 async function handle(ev) {
   const root = ev.thread_ts || ev.ts;
-  const role = pickRole(ev.text || "", threadRoles.get(root));
+  const recent = !ev.thread_ts && lastTop && Date.now() - lastTop.at < 10 * 60 * 1000 ? lastTop.role : null;
+  const role = pickRole(ev.text || "", threadRoles.get(root) || recent);
   threadRoles.set(root, role);
+  if (!ev.thread_ts) lastTop = { role, at: Date.now() };
   log(`← ${ev.ts} → ${role.label}: ${(ev.text || "").slice(0, 120)}`);
+  // Reply where the human wrote: top-level message → answer in the channel; inside a thread → in that thread.
+  const inThread = !!ev.thread_ts || cfg.chat?.replyIn === "thread";
+  const who = persona(role.id === "developer" ? role.dev : role.id);
   const placeholder = await slack("chat.postMessage", {
-    channel: CHANNEL, thread_ts: root, text: `_${role.label} regarde…_`, unfurl_links: false,
+    channel: CHANNEL, ...(inThread ? { thread_ts: root } : {}), text: `_${role.label} regarde…_`, unfurl_links: false,
+    username: who.name, icon_emoji: who.icon,
   });
   try {
     await work(ev, role, root, placeholder);
@@ -229,7 +238,7 @@ async function handle(ev) {
     const msg = LANG === "fr"
       ? "Je n'ai pas réussi à répondre cette fois. Ton message est noté, l'équipe le traitera au prochain passage."
       : "I could not answer this time. Your message is noted and will be handled at the next tick.";
-    try { await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${msg}` }); } catch {}
+    try { await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: PERSONAS ? msg : `*${role.label}*\n${msg}` }); } catch {}
   }
 }
 
@@ -244,10 +253,10 @@ async function work(ev, role, root, placeholder) {
       ? "Je n'ai pas réussi à répondre cette fois. Ton message est noté, l'équipe le traitera au prochain passage."
       : "I could not answer this time. Your message is noted and will be handled at the next tick.";
     log(`✗ ${ev.ts} exit ${code} ${err.slice(0, 300)}`);
-    await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${reply}` });
+    await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: PERSONAS ? reply : `*${role.label}*\n${reply}` });
     return; // not recorded: the tick will pick it up
   }
-  await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${reply}` });
+  await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: PERSONAS ? reply : `*${role.label}*\n${reply}` });
   record(ev.ts, "chat", `${role.label} answered live${wantsTick ? "; tick started" : ""}`);
   log(`→ ${ev.ts} answered by ${role.label}${wantsTick ? " + tick" : ""}`);
   if (wantsTick) startTick();

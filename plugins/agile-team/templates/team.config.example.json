@@ -28,7 +28,9 @@
   "slack": {
     "enabled": true,
     "channel": "#my-project-team",
-    "audience": "human"
+    "audience": "human",
+    "activity": true,
+    "personas": true
   },
   "repos": [
     {
@@ -133,5 +135,11 @@
     "commitStyle": "conventional-commits",
     "language": "en",
     "humanLanguage": "fr"
+  },
+  "chat": {
+    "replyIn": "same",
+    "rewrite": true,
+    "rewriteModel": "haiku",
+    "timeoutSeconds": 240
   }
 }

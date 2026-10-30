@@ -13,6 +13,7 @@
     "scopes": {
       "bot": [
         "chat:write",
+        "chat:write.customize",
         "channels:history",
         "channels:read",
         "users:read"

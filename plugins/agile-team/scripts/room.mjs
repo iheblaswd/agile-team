@@ -3,7 +3,9 @@
 //   node room.mjs say --from dev-java --to dev-ts --title "backend done" [--ticket KEY] [--body "..."] [--human "plain-language line(s) for the human"] [--mention] [--no-slack] [--no-jira]
 //   --human: what this means for the product, in the human's language (conventions.humanLanguage). Jira gets it on top of the technical text,
 //            the chat log gets both, Slack gets ONLY the human text when slack.audience = "human" (technical chatter stays in Jira).
-//            With slack.audience = "human", a message without --human and without --mention is not posted to Slack at all.
+//            With slack.audience = "human", a message without --human becomes a short French chat line (persona.mjs activityLine:
+//            "▶️ Je commence FORGE-7", "📬 J'ai terminé…, à toi pour la relecture", "✅ Relecture validée…") unless slack.activity = false.
+//            slack.personas = true posts each message under the agent's own name and icon (scope chat:write.customize).
 //   node room.mjs decision --type SPRINT_APPROVAL --summary "..." [--body "..."] [--blocks KEY1,KEY2]
 //       -> creates the Jira decision, posts to Slack with @mention, logs to chat file; prints the decision key
 // Slack failures never block the Jira comment or the chat log (and vice versa); failures are reported in the JSON output.
@@ -12,6 +14,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { loadConfig, parseArgs, today, nowStamp } from "./config.mjs";
+import { persona, activityLine } from "./persona.mjs";
 
 const cfg = loadConfig();
 const tz = cfg.human?.timezone || "UTC";
@@ -38,12 +41,15 @@ function logChat(text) {
 
 const humanName = cfg.human?.name || "the human";
 const humanOnly = (cfg.slack?.audience || "team") === "human";
+const activity = cfg.slack?.activity !== false;
+const personas = cfg.slack?.personas === true;
 const ROLE_FR = { po: "Product Owner", "scrum-master": "Scrum Master", "tech-lead": "Tech Lead", devops: "DevOps", "ux-designer": "Designer", team: "l'équipe" };
 function roleLabel(id) { return ROLE_FR[id] || (id?.startsWith("dev-") ? `Développeur (${id.slice(4)})` : id); }
 
 // Slack text for the human: no brackets, no sha, no commands — just the human line(s) and where to look.
 function humanSlackText({ from, ticket, human }) {
   const where = ticket ? ` · ${ticket}` : "";
+  if (personas) return String(human).replace(/\\n/g, "\n").replace(/\*\*(.+?)\*\*/g, "*$1*").replace(/`([^`\n]+)`/g, "$1");
   const body = String(human).replace(/\\n/g, "\n").replace(/\*\*(.+?)\*\*/g, "*$1*").replace(/`([^`\n]+)`/g, "$1");
   return `*${roleLabel(from)}${where}*\n${body}`;
 }
@@ -54,10 +60,20 @@ async function say(a) {
   const full = human ? `📌 Pour ${humanName} : ${human}\n\n${text}` : text;
   const out = { text: full, chat: logChat(full), slack: null, jira: null, errors: [] };
   if (!a["no-slack"]) {
-    const slackText = humanOnly ? (human ? humanSlackText({ from: a.from || "team", ticket: a.ticket, human }) : (a.mention ? text : null)) : full;
+    const from = a.from || "team";
+    let slackText = full;
+    if (humanOnly) {
+      if (human) slackText = humanSlackText({ from, ticket: a.ticket, human });
+      else if (activity) {
+        let summary = "";
+        if (a.ticket) { try { summary = run("jira.mjs", ["get", a.ticket])?.summary || ""; } catch {} }
+        const line = activityLine({ from, to: a.to, ticket: a.ticket, title: a.title, body: a.body, summary });
+        slackText = line ? (personas ? line : `*${persona(from).name}* : ${line}`) : (a.mention ? text : null);
+      } else slackText = a.mention ? text : null;
+    }
     if (slackText) {
-      try { out.slack = run("slack.mjs", ["post", slackText, ...(a.mention ? ["--mention"] : [])]); } catch (e) { out.errors.push(`slack: ${e.message}`); }
-    } else out.slack = "skipped (slack.audience=human, no --human)";
+      try { out.slack = run("slack.mjs", ["post", slackText, "--as", from, ...(a.mention ? ["--mention"] : [])]); } catch (e) { out.errors.push(`slack: ${e.message}`); }
+    } else out.slack = "skipped (no human-facing line for this event)";
   }
   if (a.ticket && !a["no-jira"]) {
     try { out.jira = run("jira.mjs", ["comment", a.ticket, full]); } catch (e) { out.errors.push(`jira: ${e.message}`); }
@@ -82,7 +98,7 @@ async function decision(a) {
   const full = a.human ? `📌 Pour ${humanName} : ${humanText}\n\n${text}` : text;
   const out = { decision: d, chat: logChat(full), slack: null, errors: [] };
   const slackText = humanOnly ? `*${fr ? (TYPE_FR[d.type] || d.type) : d.type} · ${d.key}*\n${humanText}` : full;
-  try { out.slack = run("slack.mjs", ["post", slackText, "--mention"]); } catch (e) { out.errors.push(`slack: ${e.message}`); }
+  try { out.slack = run("slack.mjs", ["post", slackText, "--mention", "--as", a.from || "scrum-master"]); } catch (e) { out.errors.push(`slack: ${e.message}`); }
   try { run("jira.mjs", ["comment", d.key, full]); } catch (e) { out.errors.push(`jira: ${e.message}`); }
   return out;
 }

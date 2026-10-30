@@ -7,7 +7,7 @@
       "name": "agile-team",
       "source": "./plugins/agile-team",
       "description": "AI Scrum team working on Jira + Slack with human approval gates.",
-      "version": "0.1.13"
+      "version": "0.1.14"
     }
   ]
 }
