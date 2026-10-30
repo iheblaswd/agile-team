@@ -40,4 +40,9 @@ Risks: …
 4. Post the daily in the room (`room.mjs say --from scrum-master --to team --title "Daily <date>" --no-jira`
    with the file content as body; use `--mention` if any decision is older than 1 day), and add
    a comment on the active sprint's epic if `jira.sprintEpicKey` is set.
+   Then make it a standup, like a real team: post the opener with `--thread daily-<YYYY-MM-DD>`
+   (the `--human` two-sentence summary), then for each active agent with something to say, one
+   message in that thread: `room.mjs say --from <id> --thread daily-<date> --no-jira --title "standup"
+   --say "Hier j'ai … Aujourd'hui je … Pas de blocage / Je bloque sur …"` (first person, 1–3 sentences,
+   team-protocol §3a-bis). Skip agents with nothing new.
 5. Print the daily in the chat.

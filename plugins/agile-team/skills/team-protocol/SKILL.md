@@ -106,14 +106,33 @@ de configuration incomplet avec un message clair"), not implementation ("Validat
 forge.template.json with zod"). Story descriptions follow the PO's two-part layout (§ agent po).
 Comments addressed to the human start with `📌 Pour <human> :`.
 
-### 3a-bis. The team chat in Slack
+### 3a-bis. The team chat in Slack — talk like teammates
 
-With `slack.audience = "human"`, every agent-to-agent message also appears in Slack as one short
-French chat line, under the agent's own name (`room.mjs` → `persona.mjs activityLine`): started,
-ready for review (with the PR link), review accepted / sent back, merged, question, answer, blocked,
-deployed. So the human sees the team work in real time without reading technical text. For this to
-read well: the titles of `QUESTION:` and `ANSWER:` messages are written in `conventions.humanLanguage`
-in product words (they are shown as is), and PR links go in `--body`.
+The Slack channel is where the human watches a professional agile team at work. It must read like
+colleagues talking, not like notifications. So **every `room.mjs say` carries `--say "…"`**: your own
+chat message, written by you, in `conventions.humanLanguage`.
+
+How to write it:
+- First person, to a named colleague when there is one ("Tech Lead, …", "PO, …"), the way a good
+  teammate writes in Teams or Slack. Polite, direct, no ceremony.
+- 1 to 3 sentences: what you did or decided, the one detail that matters, what you need and from whom.
+- Product words. No sha, command, file path, library name or test count. A PR link is fine.
+- Vary your wording; at most one emoji, only when natural. Never paste the technical `--body` here.
+
+Examples (French projects):
+- starting: « Je prends FORGE-7 ce matin. Je commence par le cas sans interface web, c'est celui qui risque de surprendre. »
+- review asked: « Tech Lead, FORGE-7 est prête pour relecture : les quatre combinaisons donnent le résultat attendu. J'ai dû ajuster la règle quand l'email est désactivé, c'est expliqué dans la PR. https://…/pull/4 »
+- accepted: « Relu, c'est propre, je fusionne FORGE-7. Une petite amélioration pour plus tard sur les messages d'erreur, je la passe au PO. »
+- sent back: « Je te renvoie FORGE-14 : quand deux conditions se suivent, le résultat ne correspond pas à ce qui sera généré. Le détail est dans la PR. »
+- question: « PO, sur FORGE-14 : on accepte plusieurs conditions par bloc dès cette étape, ou une seule ? Je continue sur FORGE-16 en attendant. »
+- answer: « Une seule par bloc pour l'étape 1, on verra le reste à l'étape 2. J'ai mis le ticket à jour. »
+- blocked: « Je bloque sur FORGE-16 : il me manque la règle pour les modules optionnels. PO, tu peux trancher ? »
+
+Threads, like a real team: messages about a ticket go in that ticket's thread automatically (the first
+one opens it in the channel); milestones (review asked, accepted, sent back, blocked, question, deployed)
+also show in the channel. The tech lead's acceptance adds ✅ on the review request. Ceremonies have their
+own thread: `--thread daily-<YYYY-MM-DD>`, `planning-sprint-NN`, `review-sprint-NN`, `retro-sprint-NN`.
+If `--say` is missing, a plain fallback line is generated (`persona.mjs`); it reads like a bot, so don't rely on it.
 
 ### 3b. Questions between agents (answered in the same tick)
 

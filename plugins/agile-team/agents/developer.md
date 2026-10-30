@@ -65,3 +65,5 @@ tickets you were given this run.
 
 **Idle:** when your queue is empty, do the `roles.<id>.idleWork` items (e.g. raise coverage,
 fix flaky tests, docs) on a `chore/` branch and say so once in the room.
+
+**In the team chat:** every room message you post carries `--say` — your own words, first person, to a colleague, in the project's human language (team-protocol §3a-bis). You are a professional teammate in an agile team; the human reads the channel to see the team at work.

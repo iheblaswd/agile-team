@@ -6,10 +6,14 @@
 //            With slack.audience = "human", a message without --human becomes a short French chat line (persona.mjs activityLine:
 //            "▶️ Je commence FORGE-7", "📬 J'ai terminé…, à toi pour la relecture", "✅ Relecture validée…") unless slack.activity = false.
 //            slack.personas = true posts each message under the agent's own name and icon (scope chat:write.customize).
+//   --say "…": the agent's own chat message for Slack — first person, French, to a colleague, like a teammate (team-protocol §3a-bis).
+//   --thread <key>: conversation to post in (default: the ticket key). The first message of a key opens a thread in the channel;
+//            later ones go inside it. Milestones (review asked/accepted/sent back, blocked, deployed, question) and --human
+//            messages are also shown in the channel (--broadcast forces it). Thread roots: team/logs/slack-threads.json.
 //   node room.mjs decision --type SPRINT_APPROVAL --summary "..." [--body "..."] [--blocks KEY1,KEY2]
 //       -> creates the Jira decision, posts to Slack with @mention, logs to chat file; prints the decision key
 // Slack failures never block the Jira comment or the chat log (and vice versa); failures are reported in the JSON output.
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -54,25 +58,51 @@ function humanSlackText({ from, ticket, human }) {
   return `*${roleLabel(from)}${where}*\n${body}`;
 }
 
+const THREADS = join(cfg.__root, "team", "logs", "slack-threads.json");
+function loadThreads() { try { return JSON.parse(readFileSync(THREADS, "utf8")); } catch { return {}; } }
+function saveThreads(t) { mkdirSync(dirname(THREADS), { recursive: true }); writeFileSync(THREADS, JSON.stringify(t, null, 2)); }
+const MILESTONE = /ready for review|\baccepted\b|\brejected\b|blocked|blocker|deployed|^QUESTION:/i;
+const tidy = (s) => String(s).replace(/\\n/g, "\n").replace(/\*\*(.+?)\*\*/g, "*$1*").replace(/`([^`\n]+)`/g, "$1").trim();
+
 async function say(a) {
   const text = format({ from: a.from || "team", to: a.to, ticket: a.ticket, title: a.title, body: a.body });
   const human = a.human ? String(a.human).replace(/\\n/g, "\n") : "";
-  const full = human ? `📌 Pour ${humanName} : ${human}\n\n${text}` : text;
+  const sayLine = a.say ? tidy(a.say) : "";
+  const full = [human ? `📌 Pour ${humanName} : ${human}` : "", sayLine ? `💬 ${sayLine}` : "", text].filter(Boolean).join("\n\n");
   const out = { text: full, chat: logChat(full), slack: null, jira: null, errors: [] };
   if (!a["no-slack"]) {
     const from = a.from || "team";
     let slackText = full;
     if (humanOnly) {
-      if (human) slackText = humanSlackText({ from, ticket: a.ticket, human });
-      else if (activity) {
+      let line = human ? humanSlackText({ from, ticket: a.ticket, human }) : sayLine;
+      if (!line && activity) {
         let summary = "";
         if (a.ticket) { try { summary = run("jira.mjs", ["get", a.ticket])?.summary || ""; } catch {} }
-        const line = activityLine({ from, to: a.to, ticket: a.ticket, title: a.title, body: a.body, summary });
-        slackText = line ? (personas ? line : `*${persona(from).name}* : ${line}`) : (a.mention ? text : null);
-      } else slackText = a.mention ? text : null;
+        line = activityLine({ from, to: a.to, ticket: a.ticket, title: a.title, body: a.body, summary }) || "";
+      }
+      slackText = line ? (personas || human ? line : `*${persona(from).name}* : ${line}`) : (a.mention ? text : null);
     }
     if (slackText) {
-      try { out.slack = run("slack.mjs", ["post", slackText, "--as", from, ...(a.mention ? ["--mention"] : [])]); } catch (e) { out.errors.push(`slack: ${e.message}`); }
+      try {
+        const key = a.thread || a.ticket || null;
+        const threads = key ? loadThreads() : {};
+        const entry = key ? threads[key] : null;
+        const args = ["post", slackText, "--as", from];
+        if (entry?.root) {
+          args.push("--thread", entry.root);
+          if (a.broadcast || human || MILESTONE.test(a.title || "")) args.push("--broadcast");
+        }
+        if (a.mention) args.push("--mention");
+        out.slack = run("slack.mjs", args);
+        if (key) {
+          const e = threads[key] || (threads[key] = { root: out.slack?.ts });
+          if (a.ticket && /ready for review/i.test(a.title || "")) e.review = out.slack?.ts;
+          const tk = a.ticket && threads[a.ticket];
+          if (tk?.review && /\baccepted\b/i.test(a.title || "")) { try { run("slack.mjs", ["react", tk.review, "white_check_mark"]); } catch {} }
+          if (tk?.review && /\brejected\b/i.test(a.title || "")) { try { run("slack.mjs", ["react", tk.review, "repeat"]); } catch {} }
+          saveThreads(threads);
+        }
+      } catch (e) { out.errors.push(`slack: ${e.message}`); }
     } else out.slack = "skipped (no human-facing line for this event)";
   }
   if (a.ticket && !a["no-jira"]) {

@@ -45,6 +45,16 @@ Risks: …
 Out of scope: …
 ```
 
+## 3b. Planning conversation (Slack)
+
+Before raising the gate, hold the planning in thread `planning-sprint-NN` (team-protocol §3a-bis),
+one `room.mjs say --thread planning-sprint-NN --no-jira --title "planning" --say "…"` each:
+1. scrum-master opens: the sprint dates and what we're deciding today.
+2. po: the sprint goal in one sentence and the 2–4 stories that matter most, in product words.
+3. each active developer: what they take, and one risk or question if they have one.
+4. tech-lead: one remark on technical risk or order of work (only if useful).
+5. scrum-master: the summary and "on soumet la proposition à <human>".
+
 ## 4. Human gate
 
 ```

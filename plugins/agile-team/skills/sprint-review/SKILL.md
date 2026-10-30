@@ -28,6 +28,9 @@ Metrics: planned <n> · delivered <m> · rejected MRs <r> · avg review turnarou
    `team/design/`. The decision's `--human` text lists each ticket as "<titre produit> — ce que tu
    peux vérifier : <action simple ou lien>", in the human's language; commands and paths stay in
    the technical body. Ask devops (spawn it) for the staging state if not in the snapshot.
+2b. Demo in Slack, thread `review-sprint-NN` (team-protocol §3a-bis): each developer presents its
+   own deliveries in product words, one message each (« J'ai livré FORGE-6 : on sait maintenant
+   calculer exactement ce qu'un projet va recevoir… »); the scrum-master closes with the summary.
 3. Raise the gate: `room.mjs decision --type SPRINT_VALIDATION --summary "Sprint NN review — <m> tickets to validate" --body "<table>"`
    (no `--blocks`: nothing is blocked by a review). Tell the user in the chat.
 4. On the human's answer (via tick/daily or `/sprint-review` again), or when the human moved

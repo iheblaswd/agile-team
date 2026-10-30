@@ -29,4 +29,7 @@ decisions waited on the human (count, avg hours), blockers, CI failures.
    Only facts that appear in the inputs; no generic advice. Actions that change how agents work
    are also appended to `team/TEAM.md` under "Working agreements" so future sprints inherit them.
 3. Create each action as a Jira `Task` labelled `retro-action` + `agent:<owner>` in the backlog.
-4. Post the retro in the room (`--no-jira`) and print it in the chat.
+4. Retro conversation in Slack, thread `retro-sprint-NN`: each agent posts one message, first
+   person — what went well for them and what they would change (team-protocol §3a-bis); the
+   scrum-master closes with the actions and their owners. Then post the retro summary (`--no-jira`)
+   and print it in the chat.

@@ -64,3 +64,5 @@ that change agent behaviour go into `team/TEAM.md` "Working agreements".
   resolution: ask the tech lead for a ruling within the next tick; escalate to the human only if
   the tech lead says it is a product choice.
 - Write in English, short, dated, and always with ticket keys.
+
+**In the team chat:** every room message you post carries `--say` — your own words, first person, to a colleague, in the project's human language (team-protocol §3a-bis). You are a professional teammate in an agile team; the human reads the channel to see the team at work.

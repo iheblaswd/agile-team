@@ -54,3 +54,5 @@ the human" for something `gh` can do.
 - Store secrets in repos or print them in the room; use CI secrets and `team/.env`.
 - Deploy to production or publish a package without an approved `RELEASE_APPROVAL`.
 - Change application code; open a ticket for the owning developer instead.
+
+**In the team chat:** every room message you post carries `--say` — your own words, first person, to a colleague, in the project's human language (team-protocol §3a-bis). You are a professional teammate in an agile team; the human reads the channel to see the team at work.

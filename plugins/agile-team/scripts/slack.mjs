@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Slack client for the agile-team plugin. Zero dependencies.
 //   node slack.mjs post "text" [--thread <ts>] [--mention] [--as <agent-id>]   # --as: post under that agent's name and icon
+//   node slack.mjs post … --thread <ts> --broadcast                   # thread reply also shown in the channel
+//   node slack.mjs react <ts> <emoji-name>                             # add a reaction (scope reactions:write)
 //   node slack.mjs read [--hours 24] [--from-human]             # recent channel messages, newest last
 //   node slack.mjs approvals [--hours 72]                       # human messages that look like decisions
 // Needs SLACK_BOT_TOKEN (scopes: chat:write, channels:history, channels:read) and SLACK_CHANNEL_ID in team/.env.
@@ -25,13 +27,19 @@ async function api(method, body) {
 
 import { persona } from "./persona.mjs";
 
-export async function post(text, { thread, mention, as } = {}) {
+export async function post(text, { thread, mention, as, broadcast } = {}) {
   const prefix = mention && humanUserId ? `<@${humanUserId}> ` : "";
   const body = { channel, text: prefix + text, unfurl_links: false };
   if (thread) body.thread_ts = thread;
+  if (thread && broadcast) body.reply_broadcast = true;
   if (as) { const p = persona(as); body.username = p.name; body.icon_emoji = p.icon; } // needs chat:write.customize
   const r = await api("chat.postMessage", body);
   return { ts: r.ts, channel: r.channel };
+}
+
+export async function react(ts, name) {
+  try { await api("reactions.add", { channel, timestamp: ts, name }); return { ok: true }; }
+  catch (e) { if (/already_reacted/.test(e.message)) return { ok: true }; throw e; }
 }
 
 export async function read({ hours = 24, fromHuman = false } = {}) {
@@ -49,7 +57,8 @@ async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const a = parseArgs(rest);
   switch (cmd) {
-    case "post": return post(a._[0], { thread: a.thread, mention: !!a.mention, as: a.as });
+    case "post": return post(a._[0], { thread: a.thread, mention: !!a.mention, as: a.as, broadcast: !!a.broadcast });
+    case "react": return react(a._[0], a._[1]);
     case "read": return read({ hours: Number(a.hours || 24), fromHuman: !!a["from-human"] });
     case "approvals": {
       const msgs = await read({ hours: Number(a.hours || 72), fromHuman: true });

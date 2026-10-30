@@ -16,7 +16,8 @@
         "chat:write.customize",
         "channels:history",
         "channels:read",
-        "users:read"
+        "users:read",
+        "reactions:write"
       ]
     }
   },
