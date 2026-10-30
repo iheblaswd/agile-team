@@ -71,7 +71,7 @@ if ($Chat -and -not $Uninstall) {
   $chatLog = Join-Path $logDir "chat-process.log"
   # Task Scheduler only restarts a task that fails to *launch*, not one whose process exits, so the
   # listener runs inside an endless loop: it exits on purpose when the plugin is updated, and comes back 5 s later.
-  $loop = "Set-Location -LiteralPath '$ProjectRoot'; while (`$true) { & node '$listener' *>> '$chatLog'; Start-Sleep -Seconds 5 }"
+  $loop = "Set-Location -LiteralPath '$ProjectRoot'; while (`$true) { & node '$listener' 2>&1 | Out-File -FilePath '$chatLog' -Append -Encoding utf8; Start-Sleep -Seconds 5 }"
   $chatAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"$loop`""
   $chatTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
   $chatSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries

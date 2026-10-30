@@ -222,20 +222,32 @@ async function handle(ev) {
   const placeholder = await slack("chat.postMessage", {
     channel: CHANNEL, thread_ts: root, text: `_${role.label} regarde…_`, unfurl_links: false,
   });
+  try {
+    await work(ev, role, root, placeholder);
+  } catch (e) {
+    log(`✗ ${ev.ts} ${e.message}`);
+    const msg = LANG === "fr"
+      ? "Je n'ai pas réussi à répondre cette fois. Ton message est noté, l'équipe le traitera au prochain passage."
+      : "I could not answer this time. Your message is noted and will be handled at the next tick.";
+    try { await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${msg}` }); } catch {}
+  }
+}
+
+async function work(ev, role, root, placeholder) {
   const thread = ev.thread_ts ? await threadText(ev.thread_ts) : "";
   const { code, out, err } = await answer({ role, text: ev.text || "", thread });
-  let answer = slackify(out);
-  const wantsTick = /\n?\[\[TICK\]\]\s*$/.test(answer);
-  answer = answer.replace(/\n?\[\[TICK\]\]\s*$/, "").trim();
-  if (!answer) {
-    answer = LANG === "fr"
+  let reply = slackify(out);
+  const wantsTick = /\n?\[\[TICK\]\]\s*$/.test(reply);
+  reply = reply.replace(/\n?\[\[TICK\]\]\s*$/, "").trim();
+  if (!reply) {
+    reply = LANG === "fr"
       ? "Je n'ai pas réussi à répondre cette fois. Ton message est noté, l'équipe le traitera au prochain passage."
       : "I could not answer this time. Your message is noted and will be handled at the next tick.";
     log(`✗ ${ev.ts} exit ${code} ${err.slice(0, 300)}`);
-    await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${answer}` });
+    await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${reply}` });
     return; // not recorded: the tick will pick it up
   }
-  await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${answer}` });
+  await slack("chat.update", { channel: CHANNEL, ts: placeholder.ts, text: `*${role.label}*\n${reply}` });
   record(ev.ts, "chat", `${role.label} answered live${wantsTick ? "; tick started" : ""}`);
   log(`→ ${ev.ts} answered by ${role.label}${wantsTick ? " + tick" : ""}`);
   if (wantsTick) startTick();
