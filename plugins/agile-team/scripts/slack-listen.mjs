@@ -284,6 +284,23 @@ function accept(ev) {
 
 // ---- Socket Mode connection --------------------------------------------------------------------
 let backoff = 1000;
+let current = null;
+
+// Laptops: after sleep/hibernate the socket can be dead without any close event. A 60 s timer that
+// fires much later than expected means the machine slept: drop the socket and reconnect. Also
+// reconnect every 4 h as a safety net.
+let lastBeat = Date.now(), connectedAt = Date.now();
+setInterval(() => {
+  const now = Date.now(), gap = now - lastBeat;
+  lastBeat = now;
+  if (gap > 3 * 60 * 1000 || now - connectedAt > 4 * 3600 * 1000) {
+    log(gap > 3 * 60 * 1000 ? `woke up after ${Math.round(gap / 60000)} min — reconnecting` : "periodic reconnect");
+    connectedAt = now;
+    try { current?.close(); } catch {}
+    if (!current || current.readyState === 3) connect();
+  }
+}, 60 * 1000);
+
 async function connect() {
   let url;
   try {
@@ -295,12 +312,13 @@ async function connect() {
     return;
   }
   const ws = new WebSocket(url);
+  current = ws;
   ws.onopen = () => { backoff = 1000; };
   ws.onmessage = (msg) => {
     let data;
     try { data = JSON.parse(msg.data); } catch { return; }
     if (data.envelope_id) ws.send(JSON.stringify({ envelope_id: data.envelope_id })); // ack within 3 s
-    if (data.type === "hello") log("connected to Slack — listening on " + CHANNEL);
+    if (data.type === "hello") { connectedAt = Date.now(); log("connected to Slack — listening on " + CHANNEL); }
     if (data.type === "disconnect") { try { ws.close(); } catch {} }
     if (data.type === "events_api") {
       const ev = data.payload?.event;

@@ -38,10 +38,17 @@ $tickTrigger.Repetition = (New-ScheduledTaskTrigger -Once -At $From -RepetitionI
 # every logon (the tick itself runs the daily when today's is missing — see tick skill §2).
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $logonTrigger.Delay = "PT2M"
+# ... and 2 minutes after the session is unlocked (waking a laptop from sleep is an unlock, not a logon).
+$unlockClass = Get-CimClass -Namespace Root/Microsoft/Windows/TaskScheduler -ClassName MSFT_TaskSessionStateChangeTrigger
+$unlockTrigger = New-CimInstance -CimClass $unlockClass -ClientOnly
+$unlockTrigger.StateChange = 8   # TASK_SESSION_UNLOCK
+$unlockTrigger.UserId = "$env:USERDOMAIN\$env:USERNAME"
+$unlockTrigger.Delay = "PT2M"
+$unlockTrigger.Enabled = $true
 
 $tasks = @(
   @{ Name = "agile-team-$Prefix-daily"; Skill = "/agile-team:daily";  Trigger = @($dailyTrigger) },
-  @{ Name = "agile-team-$Prefix-tick";  Skill = "/agile-team:tick";   Trigger = @($tickTrigger, $logonTrigger) }
+  @{ Name = "agile-team-$Prefix-tick";  Skill = "/agile-team:tick";   Trigger = @($tickTrigger, $logonTrigger, $unlockTrigger) }
 )
 
 foreach ($t in $tasks) {
