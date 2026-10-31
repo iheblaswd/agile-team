@@ -82,7 +82,7 @@ if ($Chat -and -not $Uninstall) {
   $chatAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"$loop`""
   $chatTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
   $chatSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-  Register-ScheduledTask -TaskName $chatName -Action $chatAction -Trigger $chatTrigger -Settings $chatSettings -Description "agile-team plugin: live Slack chat for $ProjectRoot" | Out-Null
+  Register-ScheduledTask -TaskName $chatName -Action $chatAction -Trigger @($chatTrigger, $unlockTrigger) -Settings $chatSettings -Description "agile-team plugin: live Slack chat for $ProjectRoot" | Out-Null
   Start-ScheduledTask -TaskName $chatName
   Write-Host "Registered and started $chatName (live Slack chat). Log: $logDir\chat.log"
 }
