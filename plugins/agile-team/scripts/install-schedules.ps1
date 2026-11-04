@@ -1,6 +1,7 @@
 # Registers Windows Scheduled Tasks that run the team ceremonies unattended with Claude Code.
 #   powershell -ExecutionPolicy Bypass -File install-schedules.ps1 -ProjectRoot "D:\projects\forge" [-DailyTime 09:00] [-TickMinutes 60] [-From 08:00] [-To 19:00] [-Weekdays] [-Prefix forge]
 #   -From/-To bound the tick to working hours (default 08:00-19:00); -Weekdays limits daily and tick to Monday-Friday.
+#   -Model sonnet runs the tick and the daily on that model (saves plan usage; default: the account default).
 #   -Chat also registers the live Slack chat listener (slack-listen.mjs): starts at logon, restarts if it stops.
 #   powershell -ExecutionPolicy Bypass -File install-schedules.ps1 -ProjectRoot "D:\projects\forge" -Uninstall
 # Requirements: `claude` on PATH (Claude Code), team/team.config.json and team/.env filled, plugin installed in that project.
@@ -12,6 +13,7 @@ param(
   [string]$To = "19:00",
   [switch]$Weekdays,
   [switch]$Chat,
+  [string]$Model = "",
   [string]$Prefix = "",
   [switch]$Uninstall
 )
@@ -58,7 +60,8 @@ foreach ($t in $tasks) {
   }
   if ($Uninstall) { continue }
   $log = Join-Path $logDir ("$($t.Skill.Split(':')[1]).log")
-  $cmd = "cd /d `"$ProjectRoot`" && claude -p `"$($t.Skill)`" --permission-mode acceptEdits >> `"$log`" 2>&1"
+  $modelArg = if ($Model) { " --model $Model" } else { "" }
+  $cmd = "cd /d `"$ProjectRoot`" && claude -p `"$($t.Skill)`" --permission-mode acceptEdits$modelArg >> `"$log`" 2>&1"
   $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c $cmd"
   # Laptops: default task settings refuse to start on battery and kill the run when unplugged — the team must not depend on the charger.
   $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -StartWhenAvailable -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries

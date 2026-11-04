@@ -8,7 +8,7 @@
 // Every handled message is recorded in team/logs/feedback.json so the tick does not handle it twice.
 import { loadConfig, requireEnv } from "./config.mjs";
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, appendFileSync, mkdirSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, appendFileSync, mkdirSync, unlinkSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { persona } from "./persona.mjs";
@@ -170,7 +170,7 @@ async function answer({ role, text, thread }) {
   const draft = await runClaude({
     cwd: ROOT,
     stdin: userPrompt({ text, thread }),
-    args: ["-p", "Réponds au message ci-dessus.", "--append-system-prompt-file", sys, "--permission-mode", "acceptEdits"],
+    args: ["-p", "Réponds au message ci-dessus.", "--append-system-prompt-file", sys, "--permission-mode", "acceptEdits", ...(cfg.chat?.model ? ["--model", cfg.chat.model] : [])],
   });
   try { unlinkSync(sys); } catch {}
   if (!draft.out) return draft;
@@ -198,6 +198,10 @@ function slackify(text) {
 }
 
 function startTick() {
+  try {
+    const lock = join(LOG_DIR, "tick.lock");
+    if (existsSync(lock) && Date.now() - statSync(lock).mtimeMs < 2 * 3600 * 1000) return log("tick already running — not starting another");
+  } catch {}
   const name = `agile-team-${cfg.chat?.taskPrefix || ROOT.split(/[\\/]/).pop()}-tick`;
   if (process.platform !== "win32") return log("tick requested (start it from cron/launchd on this OS)");
   const c = spawn("schtasks", ["/run", "/tn", name], { windowsHide: true });
